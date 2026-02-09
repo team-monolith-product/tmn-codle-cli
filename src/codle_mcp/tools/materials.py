@@ -1,0 +1,202 @@
+from codle_mcp.api.client import client
+from codle_mcp.api.models import (
+    build_jsonapi_payload,
+    extract_list,
+    extract_single,
+    format_material_summary,
+)
+from codle_mcp.app import mcp
+
+
+@mcp.tool()
+async def search_materials(
+    query: str | None = None,
+    tag_ids: list[str] | None = None,
+    is_public: bool | None = None,
+    page_size: int = 20,
+    page_number: int = 1,
+) -> str:
+    """자료(Material)를 검색합니다.
+
+    키워드, 태그, 공개 여부 등으로 기존 자료를 찾을 수 있습니다.
+    새 자료를 만들기 전에 기존 자료를 먼저 검색하여 참고하세요.
+
+    Args:
+        query: 검색 키워드 (자료 이름에서 검색)
+        tag_ids: 필터링할 태그 ID 목록
+        is_public: 공개 여부 필터 (True=공개, False=비공개, None=전체)
+        page_size: 페이지당 결과 수 (기본 20, 최대 100)
+        page_number: 페이지 번호 (1부터 시작)
+    """
+    params: dict = {
+        "page[size]": min(page_size, 100),
+        "page[number]": page_number,
+    }
+    if query:
+        params["filter[name_cont]"] = query
+    if is_public is not None:
+        params["filter[is_public_eq]"] = str(is_public).lower()
+    if tag_ids:
+        params["filter[tags_id_in][]"] = tag_ids
+
+    response = await client.list_materials(params)
+    materials = extract_list(response)
+
+    if not materials:
+        return "검색 결과가 없습니다."
+
+    lines = [f"자료 검색 결과 ({len(materials)}건):"]
+    for m in materials:
+        lines.append(format_material_summary(m))
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def get_material_detail(material_id: str) -> str:
+    """자료(Material)의 상세 정보를 조회합니다.
+
+    자료에 포함된 활동(Activity) 목록과 메타데이터를 확인할 수 있습니다.
+    자료를 수정하거나 복제하기 전에 현재 상태를 확인할 때 사용합니다.
+
+    Args:
+        material_id: 조회할 자료의 ID
+    """
+    params = {"include": "activities,tags"}
+    response = await client.get_material(material_id, params)
+    material = extract_single(response)
+
+    included = response.get("included", [])
+    activities = [
+        {"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "activities"
+    ]
+    tags = [{"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "tags"]
+
+    lines = [
+        f"자료: {material.get('name', '(무제)')}",
+        f"ID: {material['id']}",
+        f"공개: {'예' if material.get('is_public') else '아니오'}",
+        f"공식: {'예' if material.get('is_official') else '아니오'}",
+        f"레벨: {material.get('level', 0)}",
+    ]
+
+    if tags:
+        tag_names = [f"{t.get('name', '')} ({t.get('domain', '')})" for t in tags]
+        lines.append(f"태그: {', '.join(tag_names)}")
+
+    if activities:
+        lines.append(f"\n활동 ({len(activities)}개):")
+        for a in activities:
+            depth_prefix = "  " * a.get("depth", 0)
+            lines.append(f"  {depth_prefix}[{a['id']}] {a.get('name', '(무제)')}")
+    else:
+        lines.append("\n활동: 없음")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def create_material(
+    name: str,
+    is_public: bool = False,
+    is_official: bool = False,
+    level: int = 1,
+    tag_ids: list[str] | None = None,
+    material_bundle_id: str | None = None,
+    position: int | None = None,
+) -> str:
+    """새 자료(Material)를 생성합니다.
+
+    자료는 여러 활동(Activity)을 담는 컨테이너입니다.
+    자료 생성 후 manage_activities로 활동을 추가하세요.
+
+    Args:
+        name: 자료 이름 (필수, 최대 255자)
+        is_public: 공개 여부 (기본 False)
+        is_official: 공식 자료 여부 (기본 False)
+        level: 접근 레벨 (0=guest, 1=teacher, 2=ai_teacher, 4=master, 5=visang)
+        tag_ids: 연결할 태그 ID 목록
+        material_bundle_id: 소속 시리즈 ID (시리즈에 포함시킬 경우)
+        position: 시리즈 내 순서 (material_bundle_id 설정 시 필수)
+    """
+    attrs = {
+        "name": name,
+        "is_public": is_public,
+        "is_official": is_official,
+        "level": level,
+    }
+    if tag_ids:
+        attrs["tag_ids"] = tag_ids
+    if material_bundle_id:
+        attrs["material_bundle_id"] = material_bundle_id
+    if position is not None:
+        attrs["position"] = position
+
+    payload = build_jsonapi_payload("materials", attrs)
+    response = await client.create_material(payload)
+    material = extract_single(response)
+    return f"자료 생성 완료: [{material['id']}] {material.get('name')}"
+
+
+@mcp.tool()
+async def update_material(
+    material_id: str,
+    name: str | None = None,
+    is_public: bool | None = None,
+    is_official: bool | None = None,
+    level: int | None = None,
+    tag_ids: list[str] | None = None,
+    material_bundle_id: str | None = None,
+    position: int | None = None,
+) -> str:
+    """기존 자료(Material)의 정보를 수정합니다.
+
+    변경하고 싶은 필드만 전달하면 됩니다. 전달하지 않은 필드는 유지됩니다.
+
+    Args:
+        material_id: 수정할 자료의 ID
+        name: 자료 이름
+        is_public: 공개 여부
+        is_official: 공식 자료 여부
+        level: 접근 레벨
+        tag_ids: 연결할 태그 ID 목록 (전체 교체)
+        material_bundle_id: 소속 시리즈 ID
+        position: 시리즈 내 순서
+    """
+    attrs: dict = {}
+    if name is not None:
+        attrs["name"] = name
+    if is_public is not None:
+        attrs["is_public"] = is_public
+    if is_official is not None:
+        attrs["is_official"] = is_official
+    if level is not None:
+        attrs["level"] = level
+    if tag_ids is not None:
+        attrs["tag_ids"] = tag_ids
+    if material_bundle_id is not None:
+        attrs["material_bundle_id"] = material_bundle_id
+    if position is not None:
+        attrs["position"] = position
+
+    if not attrs:
+        return "수정할 항목이 없습니다."
+
+    payload = build_jsonapi_payload("materials", attrs, material_id)
+    response = await client.update_material(material_id, payload)
+    material = extract_single(response)
+    return f"자료 수정 완료: [{material['id']}] {material.get('name')}"
+
+
+@mcp.tool()
+async def duplicate_material(material_id: str) -> str:
+    """기존 자료(Material)를 복제합니다.
+
+    원본 자료의 활동, 문제 등이 모두 복사됩니다.
+    복제 후 update_material로 이름이나 내용을 수정하세요.
+
+    Args:
+        material_id: 복제할 원본 자료의 ID
+    """
+    response = await client.duplicate_material(material_id)
+    material = extract_single(response)
+    return f"자료 복제 완료: [{material['id']}] {material.get('name')} (원본: {material_id})"

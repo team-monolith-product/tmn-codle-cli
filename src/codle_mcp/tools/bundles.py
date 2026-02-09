@@ -1,0 +1,176 @@
+from codle_mcp.api.client import client
+from codle_mcp.api.models import (
+    build_jsonapi_payload,
+    extract_list,
+    extract_single,
+    format_bundle_summary,
+    format_material_summary,
+)
+from codle_mcp.app import mcp
+
+
+@mcp.tool()
+async def list_bundles(
+    query: str | None = None,
+    is_published: bool | None = None,
+    is_official: bool | None = None,
+    tag_ids: list[str] | None = None,
+    page_size: int = 20,
+    page_number: int = 1,
+) -> str:
+    """시리즈(MaterialBundle) 목록을 조회합니다.
+
+    시리즈는 여러 자료를 차시 순서로 묶은 커리큘럼입니다.
+
+    Args:
+        query: 검색 키워드 (시리즈 제목에서 검색)
+        is_published: 게시 여부 필터
+        is_official: 공식 시리즈 여부 필터
+        tag_ids: 필터링할 태그 ID 목록
+        page_size: 페이지당 결과 수 (기본 20, 최대 100)
+        page_number: 페이지 번호 (1부터 시작)
+    """
+    params: dict = {
+        "page[size]": min(page_size, 100),
+        "page[number]": page_number,
+    }
+    if query:
+        params["filter[title_cont]"] = query
+    if is_published is not None:
+        params["filter[is_published_eq]"] = str(is_published).lower()
+    if is_official is not None:
+        params["filter[is_official_eq]"] = str(is_official).lower()
+    if tag_ids:
+        params["filter[tags_id_in][]"] = tag_ids
+
+    response = await client.list_material_bundles(params)
+    bundles = extract_list(response)
+
+    if not bundles:
+        return "시리즈가 없습니다."
+
+    lines = [f"시리즈 목록 ({len(bundles)}건):"]
+    for b in bundles:
+        lines.append(format_bundle_summary(b))
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def get_bundle_detail(bundle_id: str) -> str:
+    """시리즈(MaterialBundle)의 상세 정보를 조회합니다.
+
+    시리즈에 포함된 자료 목록과 순서를 확인할 수 있습니다.
+
+    Args:
+        bundle_id: 조회할 시리즈의 ID
+    """
+    params = {"include": "materials,tags"}
+    response = await client.get_material_bundle(bundle_id, params)
+    bundle = extract_single(response)
+
+    included = response.get("included", [])
+    materials = [
+        {"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "materials"
+    ]
+    materials.sort(key=lambda m: m.get("position") or 0)
+    tags = [{"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "tags"]
+
+    lines = [
+        f"시리즈: {bundle.get('title', '(무제)')}",
+        f"ID: {bundle['id']}",
+        f"게시: {'예' if bundle.get('is_published') else '아니오'}",
+        f"공식: {'예' if bundle.get('is_official') else '아니오'}",
+    ]
+
+    if tags:
+        tag_names = [f"{t.get('name', '')} ({t.get('domain', '')})" for t in tags]
+        lines.append(f"태그: {', '.join(tag_names)}")
+
+    if materials:
+        lines.append(f"\n포함된 자료 ({len(materials)}개):")
+        for i, m in enumerate(materials, 1):
+            lines.append(f"  {i}차시: {format_material_summary(m)}")
+    else:
+        lines.append("\n포함된 자료: 없음")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def manage_bundle(
+    action: str,
+    bundle_id: str | None = None,
+    title: str | None = None,
+    description: dict | None = None,
+    is_official: bool | None = None,
+    is_published: bool | None = None,
+    tag_ids: list[str] | None = None,
+    user_id: str | None = None,
+) -> str:
+    """시리즈(MaterialBundle)를 생성하거나 수정합니다.
+
+    시리즈는 여러 자료를 차시 순서로 묶은 커리큘럼입니다.
+    자료를 시리즈에 추가하려면 update_material로 자료의 material_bundle_id와 position을 설정하세요.
+
+    Args:
+        action: 수행할 작업 ("create", "update", "delete")
+        bundle_id: 시리즈 ID (update, delete 시 필수)
+        title: 시리즈 제목 (create 시 필수, 최대 64자)
+        description: 시리즈 설명 (Lexical 에디터 JSON 형식)
+        is_official: 공식 시리즈 여부
+        is_published: 게시 여부
+        tag_ids: 연결할 태그 ID 목록
+        user_id: 시리즈 생성자 ID (create 시 필수)
+    """
+    if action == "create":
+        if not title or not user_id:
+            return "create 시 title과 user_id는 필수입니다."
+
+        attrs: dict = {
+            "title": title,
+            "user_id": user_id,
+            "is_official": is_official if is_official is not None else False,
+            "is_published": is_published if is_published is not None else False,
+        }
+        if description is not None:
+            attrs["description"] = description
+        if tag_ids:
+            attrs["tag_ids"] = tag_ids
+
+        payload = build_jsonapi_payload("material_bundles", attrs)
+        response = await client.create_material_bundle(payload)
+        bundle = extract_single(response)
+        return f"시리즈 생성 완료: [{bundle['id']}] {bundle.get('title')}"
+
+    elif action == "update":
+        if not bundle_id:
+            return "update 시 bundle_id는 필수입니다."
+
+        attrs = {}
+        if title is not None:
+            attrs["title"] = title
+        if description is not None:
+            attrs["description"] = description
+        if is_official is not None:
+            attrs["is_official"] = is_official
+        if is_published is not None:
+            attrs["is_published"] = is_published
+        if tag_ids is not None:
+            attrs["tag_ids"] = tag_ids
+
+        if not attrs:
+            return "수정할 항목이 없습니다."
+
+        payload = build_jsonapi_payload("material_bundles", attrs, bundle_id)
+        response = await client.update_material_bundle(bundle_id, payload)
+        bundle = extract_single(response)
+        return f"시리즈 수정 완료: [{bundle['id']}] {bundle.get('title')}"
+
+    elif action == "delete":
+        if not bundle_id:
+            return "delete 시 bundle_id는 필수입니다."
+        await client.delete_material_bundle(bundle_id)
+        return f"시리즈 삭제 완료: {bundle_id}"
+
+    else:
+        return f"유효하지 않은 action: {action}. create, update, delete 중 하나를 사용하세요."
