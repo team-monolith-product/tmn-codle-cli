@@ -193,6 +193,17 @@ class CodleClient:
     async def duplicate_material_bundle(self, bundle_id: str) -> dict:
         return await self._request("POST", f"/api/v1/material_bundles/{bundle_id}/duplicate")
 
+    # --- Activity Transitions ---
+
+    async def create_activity_transition(self, data: dict) -> dict:
+        return await self._request("POST", "/api/v1/activity_transitions", json=data)
+
+    async def delete_activity_transition(self, transition_id: str) -> dict:
+        return await self._request("DELETE", f"/api/v1/activity_transitions/{transition_id}")
+
+    async def do_many_activity_transitions(self, data: dict) -> dict:
+        return await self._request("POST", "/api/v1/activity_transitions/do_many", json=data)
+
     # --- Tags ---
 
     async def list_tags(self, params: dict | None = None) -> dict:

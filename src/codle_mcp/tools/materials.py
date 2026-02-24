@@ -90,7 +90,13 @@ async def get_material_detail(material_id: str) -> str:
     if activities:
         lines.append(f"\n활동 ({len(activities)}개):")
         for a in activities:
-            depth_prefix = "  " * int(a.get("depth", 0))
+            raw_depth = a.get("depth", 0)
+            try:
+                depth_val = int(raw_depth)
+            except (ValueError, TypeError):
+                # "h1" → 0, "h2" → 1, "h3" → 2
+                depth_val = int(str(raw_depth).replace("h", "")) - 1 if str(raw_depth).startswith("h") else 0
+            depth_prefix = "  " * depth_val
             lines.append(f"  {depth_prefix}[{a['id']}] {a.get('name', '(무제)')}")
     else:
         lines.append("\n활동: 없음")

@@ -94,7 +94,35 @@ async def manage_activities(
         payload = build_jsonapi_payload("activities", attrs)
         response = await client.create_activity(payload)
         activity = extract_single(response)
-        return f"활동 생성 완료: [{activity['id']}] {activity.get('name')} (type: {activity_type})"
+        new_id = activity["id"]
+
+        # 선형 체이닝: 기존 마지막 활동 → 새 활동 transition 자동 생성
+        chain_msg = ""
+        try:
+            mat_resp = await client.get_material(material_id, {"include": "activities,activity_transitions"})
+            included = mat_resp.get("included", [])
+            transitions = [i for i in included if i.get("type") == "activity_transition"]
+            existing_ids = [i["id"] for i in included if i.get("type") == "activity" and i["id"] != new_id]
+
+            if existing_ids:
+                before_ids = {str(t["attributes"]["before_activity_id"]) for t in transitions}
+                tails = [aid for aid in existing_ids if aid not in before_ids]
+                if len(tails) == 1:
+                    transition_payload = {
+                        "data": {
+                            "type": "activity_transition",
+                            "attributes": {
+                                "before_activity_id": tails[0],
+                                "after_activity_id": new_id,
+                            },
+                        }
+                    }
+                    await client.create_activity_transition(transition_payload)
+                    chain_msg = f", {tails[0]} → {new_id} 연결됨"
+        except CodleAPIError as e:
+            chain_msg = f", 체이닝 실패: {e.detail}"
+
+        return f"활동 생성 완료: [{new_id}] {activity.get('name')} (type: {activity_type}{chain_msg})"
 
     elif action == "update":
         if not activity_id:
