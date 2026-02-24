@@ -43,6 +43,60 @@ Claude Desktop/Code
 - **갱신**: refresh_token (만료 없음, Redis 활동 기록 필요)
 - **발급**: password grant (user-rails Doorkeeper)
 
+## 디버깅
+
+### 로그 레벨
+
+`CODLE_LOG_LEVEL` 환경변수로 로그 레벨을 설정한다. MCP는 stdio 프로토콜이므로 로그는 **stderr**로 출력된다.
+
+| 레벨 | 출력 내용 |
+|---|---|
+| `ERROR` | 예외만 |
+| `WARNING` | API 에러 응답 (상태코드, 본문 300자) |
+| `INFO` | 서버 시작, 인증 성공, 토큰 갱신 (기본값) |
+| `DEBUG` | 모든 API 요청 (method, path, params, body) + 응답 상태코드 |
+
+### 디버그 로깅 활성화
+
+`.mcp.json`의 `env`에 추가:
+
+```json
+{
+  "mcpServers": {
+    "codle": {
+      "command": "codle-mcp",
+      "env": {
+        "CODLE_LOG_LEVEL": "DEBUG",
+        ...
+      }
+    }
+  }
+}
+```
+
+설정 변경 후 MCP 서버를 재시작해야 반영된다.
+
+### 로그 확인 방법
+
+Claude Code에서는 stderr가 MCP 서버 로그 파일로 리다이렉트된다:
+
+```bash
+# Claude Code MCP 로그 위치
+tail -f ~/.claude/logs/mcp-server-codle.log
+```
+
+Claude Desktop은 `~/Library/Logs/Claude/` 하위에서 확인할 수 있다.
+
+### 로그 출력 예시
+
+```
+22:16:03 [INFO] codle_mcp: codle-mcp 서버 시작
+22:16:05 [INFO] codle_mcp: 인증 성공 (email=teacher@example.com)
+22:16:05 [DEBUG] codle_mcp: GET /api/v1/materials params={'filter[query]': 'AI', 'page[size]': '5'}
+22:16:05 [DEBUG] codle_mcp: GET /api/v1/materials → 200
+22:16:10 [WARNING] codle_mcp: POST /api/v1/activities → 422: {"errors":[...]}
+```
+
 ## TODO
 
 ### 인증
