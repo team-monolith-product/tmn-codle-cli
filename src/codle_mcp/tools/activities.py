@@ -44,12 +44,18 @@ async def _create_transition(before_id: str, after_id: str, level: str | None = 
     await client.create_activity_transition(payload)
 
 
-async def _find_tail_activity(material_id: str, exclude_id: str) -> str | None:
-    """material의 마지막 활동(outgoing transition 없는 활동) ID를 반환."""
+async def _get_material_transitions(material_id: str, exclude_id: str = "") -> tuple[list[dict], list[str]]:
+    """material의 transition 목록과 활동 ID 목록을 반환."""
     mat_resp = await client.get_material(material_id, {"include": "activities,activity_transitions"})
     included = mat_resp.get("included", [])
     transitions = [i for i in included if i.get("type") == "activity_transition"]
     existing_ids = [i["id"] for i in included if i.get("type") == "activity" and i["id"] != exclude_id]
+    return transitions, existing_ids
+
+
+async def _find_tail_activity(material_id: str, exclude_id: str) -> str | None:
+    """material의 마지막 활동(outgoing transition 없는 활동) ID를 반환."""
+    transitions, existing_ids = await _get_material_transitions(material_id, exclude_id)
 
     if not existing_ids:
         return None
@@ -57,6 +63,21 @@ async def _find_tail_activity(material_id: str, exclude_id: str) -> str | None:
     before_ids = {str(t["attributes"]["before_activity_id"]) for t in transitions}
     tails = [aid for aid in existing_ids if aid not in before_ids]
     return tails[0] if len(tails) == 1 else None
+
+
+async def _delete_linear_transitions_from(material_id: str, activity_id: str) -> list[str]:
+    """activity_id에서 나가는 선형(level=nil) transition을 삭제하고 삭제된 ID 반환."""
+    transitions, _ = await _get_material_transitions(material_id)
+    deleted = []
+    for t in transitions:
+        attrs = t.get("attributes", {})
+        if str(attrs.get("before_activity_id")) == str(activity_id) and not attrs.get("level"):
+            try:
+                await client.delete_activity_transition(t["id"])
+                deleted.append(t["id"])
+            except CodleAPIError:
+                pass
+    return deleted
 
 
 @mcp.tool()
@@ -98,11 +119,15 @@ async def manage_activities(
 
     ## 갈림길(branch)
     코스 끝에 보완/기본/정복 갈림길을 만들려면 branch_from + branch_level을 지정합니다.
-    갈림길은 반드시 mid를 포함하고, low/high 중 1개 이상 필요합니다.
+    갈림길은 반드시 mid를 먼저 생성하고, 그 다음 low/high를 생성하세요.
     예) 활동 "48330"에서 3갈래 분기:
+      create(..., branch_from="48330", branch_level="mid")   # 기본 (갈림길 중) — 반드시 첫 번째
       create(..., branch_from="48330", branch_level="low")   # 보완 (갈림길 하)
-      create(..., branch_from="48330", branch_level="mid")   # 기본 (갈림길 중)
       create(..., branch_from="48330", branch_level="high")  # 정복 (갈림길 상)
+
+    ## 문제 연결
+    QuizActivity, SheetActivity 생성 후 manage_problem_collections로 문제를 연결해야 합니다.
+    문제가 연결되지 않으면 빈 퀴즈/활동지로 표시됩니다.
 
     Args:
         action: 수행할 작업 ("create", "update", "delete", "duplicate")
@@ -116,7 +141,8 @@ async def manage_activities(
             AiRecommendQuizActivity
         depth: 활동 깊이 (0=메인, 1=하위, 2=하위의 하위). 기본 0
         tag_ids: 연결할 태그 ID 목록
-        branch_from: 갈림길 분기점 활동 ID. 지정 시 자동 체이닝 대신 해당 활동에서 분기
+        branch_from: 갈림길 분기점 활동 ID. 지정 시 자동 체이닝 대신 해당 활동에서 분기.
+            기존 선형 transition이 있으면 자동으로 제거됩니다.
         branch_level: 갈림길 레벨 ("low"=보완, "mid"=기본, "high"=정복). branch_from과 함께 사용
     """
     if action == "create":
@@ -156,9 +182,13 @@ async def manage_activities(
         chain_msg = ""
         try:
             if branch_from and branch_level:
+                # 갈림길 생성 전: branch_from에서 나가는 기존 선형 transition 제거
+                deleted_transitions = await _delete_linear_transitions_from(material_id, branch_from)
+                if deleted_transitions:
+                    chain_msg += f", 기존 선형 transition {len(deleted_transitions)}개 제거"
                 # 갈림길: branch_from → 새 활동 (level 지정)
                 await _create_transition(branch_from, new_id, branch_level)
-                chain_msg = f", 갈림길 {branch_from} →({branch_level}) {new_id}"
+                chain_msg += f", 갈림길 {branch_from} →({branch_level}) {new_id}"
             else:
                 # 선형 체이닝: tail → 새 활동
                 tail = await _find_tail_activity(material_id, new_id)
@@ -166,7 +196,17 @@ async def manage_activities(
                     await _create_transition(tail, new_id)
                     chain_msg = f", {tail} → {new_id} 연결됨"
         except CodleAPIError as e:
-            chain_msg = f", 체이닝 실패: {e.detail}"
+            # 롤백: transition 생성 실패 시 활동 삭제
+            rollback_msg = ""
+            try:
+                await client.delete_activity(new_id)
+                rollback_msg = " (생성된 활동 롤백 완료)"
+            except CodleAPIError:
+                rollback_msg = f" (활동 [{new_id}] 롤백 실패 — 수동 삭제 필요)"
+            hint = ""
+            if "올바르지 않은 값" in str(e.detail):
+                hint = " [힌트: branch_from 활동에 이미 같은 level의 transition이 있을 수 있습니다]"
+            return f"갈림길 transition 생성 실패: {e.detail}{hint}{rollback_msg}"
 
         return f"활동 생성 완료: [{new_id}] {activity.get('name')} (type: {activity_type}{chain_msg})"
 

@@ -59,13 +59,13 @@ async def search_materials(
 async def get_material_detail(material_id: str) -> str:
     """자료(Material)의 상세 정보를 조회합니다.
 
-    자료에 포함된 활동(Activity) 목록과 메타데이터를 확인할 수 있습니다.
+    자료에 포함된 활동(Activity) 목록, 활동 유형, 문제 연결 여부, 분기 정보를 확인할 수 있습니다.
     자료를 수정하거나 복제하기 전에 현재 상태를 확인할 때 사용합니다.
 
     Args:
         material_id: 조회할 자료의 ID
     """
-    params = {"include": "activities,tags"}
+    params = {"include": "activities,tags,activity_transitions"}
     response = await client.get_material(material_id, params)
     material = extract_single(response)
 
@@ -74,6 +74,11 @@ async def get_material_detail(material_id: str) -> str:
         {"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "activity"
     ]
     tags = [{"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "tag"]
+    transitions = [
+        {"id": i["id"], **i.get("attributes", {})}
+        for i in included
+        if i.get("type") == "activity_transition"
+    ]
 
     lines = [
         f"자료: {material.get('name', '(무제)')}",
@@ -88,18 +93,40 @@ async def get_material_detail(material_id: str) -> str:
         lines.append(f"태그: {', '.join(tag_names)}")
 
     if activities:
+        # 활동 ID → 이름 매핑 (transition 표시용)
+        activity_names = {str(a["id"]): a.get("name", "(무제)") for a in activities}
+
         lines.append(f"\n활동 ({len(activities)}개):")
         for a in activities:
             raw_depth = a.get("depth", 0)
             try:
                 depth_val = int(raw_depth)
             except (ValueError, TypeError):
-                # "h1" → 0, "h2" → 1, "h3" → 2
                 depth_val = int(str(raw_depth).replace("h", "")) - 1 if str(raw_depth).startswith("h") else 0
             depth_prefix = "  " * depth_val
-            lines.append(f"  {depth_prefix}[{a['id']}] {a.get('name', '(무제)')}")
+            act_type = a.get("activitiable_type", "?")
+            # problem_collection_ids 개수로 문제 연결 여부 표시
+            pc_ids = a.get("problem_collection_ids") or []
+            problem_info = f", 문제세트: {len(pc_ids)}개" if pc_ids else ""
+            lines.append(
+                f"  {depth_prefix}[{a['id']}] {a.get('name', '(무제)')} "
+                f"(type: {act_type}, depth: {raw_depth}{problem_info})"
+            )
     else:
         lines.append("\n활동: 없음")
+
+    if transitions:
+        lines.append(f"\n코스 흐름 ({len(transitions)}개):")
+        for t in transitions:
+            before_id = str(t.get("before_activity_id", "?"))
+            after_id = str(t.get("after_activity_id", "?"))
+            level = t.get("level")
+            before_name = activity_names.get(before_id, before_id)
+            after_name = activity_names.get(after_id, after_id)
+            if level:
+                lines.append(f"  [{before_id}] {before_name} →({level}) [{after_id}] {after_name}")
+            else:
+                lines.append(f"  [{before_id}] {before_name} → [{after_id}] {after_name}")
 
     return "\n".join(lines)
 

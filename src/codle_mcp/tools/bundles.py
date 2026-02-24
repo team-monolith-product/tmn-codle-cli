@@ -24,12 +24,13 @@ async def list_bundles(
 
     Args:
         query: 검색 키워드 (시리즈 제목에서 검색, 공백 무시)
-        is_published: 게시 여부 필터
+        is_published: 게시 여부 필터 (True=게시된 시리즈만, False=미게시만, None=전체)
         is_official: 공식 시리즈 여부 필터
         tag_ids: 필터링할 태그 ID 목록 (material_bundle_category 도메인 태그)
         page_size: 페이지당 결과 수 (기본 20, 최대 100)
         page_number: 페이지 번호 (1부터 시작)
     """
+    await client.ensure_auth()
     params: dict = {
         "page[size]": min(page_size, 100),
         "page[number]": page_number,
@@ -42,6 +43,9 @@ async def list_bundles(
         params["filter[is_official]"] = str(is_official).lower()
     if tag_ids:
         params["filter[material_bundle_category_tag_ids]"] = ",".join(tag_ids)
+    # 비공개 번들 조회 시 user_id 필터 필수 (is_published=true가 아닌 경우)
+    if is_published is not True and client.user_id:
+        params["filter[user_id]"] = client.user_id
 
     response = await client.list_material_bundles(params)
     bundles = extract_list(response)

@@ -1,4 +1,4 @@
-from codle_mcp.api.client import client
+from codle_mcp.api.client import CodleAPIError, client
 from codle_mcp.api.models import (
     build_jsonapi_payload,
     extract_list,
@@ -116,3 +116,154 @@ async def upsert_problem(
         response = await client.create_problem(payload)
         problem = extract_single(response)
         return f"문제 생성 완료: [{problem['id']}] {problem.get('title')} (type: {problem_type})"
+
+
+@mcp.tool()
+async def manage_problem_collections(
+    action: str,
+    activity_id: str | None = None,
+    problem_ids: list[str] | None = None,
+    problem_collection_id: str | None = None,
+    name: str | None = None,
+    is_random: bool = False,
+    problem_count: int | None = None,
+) -> str:
+    """활동(Activity)에 문제 세트(ProblemCollection)를 생성하고 문제를 연결합니다.
+
+    QuizActivity, SheetActivity 등 문제를 포함하는 활동에 사용합니다.
+    활동 생성 후 이 도구로 문제를 연결해야 학생에게 문제가 표시됩니다.
+
+    ## 워크플로우
+    1. upsert_problem으로 문제 생성 → problem_id 획득
+    2. manage_problem_collections(action="create", activity_id=..., problem_ids=[...])
+       → ProblemCollection 생성 + 문제 연결을 한 번에 수행
+
+    ## 동작 방식
+    - create: ProblemCollection 생성 후, problem_ids로 지정된 문제들을 순서대로 연결
+    - add_problems: 기존 ProblemCollection에 문제 추가
+    - delete: ProblemCollection 삭제
+
+    Args:
+        action: 수행할 작업 ("create", "add_problems", "delete")
+        activity_id: 활동 ID (create 시 필수). 활동의 activitiable_id가 자동으로 사용됩니다.
+        problem_ids: 연결할 문제 ID 목록 (create, add_problems 시 필수)
+        problem_collection_id: ProblemCollection ID (add_problems, delete 시 필수)
+        name: ProblemCollection 이름 (create 시 선택, 기본값: 활동 이름)
+        is_random: 문제 랜덤 출제 여부 (기본 false)
+        problem_count: 랜덤 출제 시 문제 수 (is_random=true일 때만 사용)
+    """
+    if action == "create":
+        if not activity_id:
+            return "create 시 activity_id는 필수입니다."
+        if not problem_ids:
+            return "create 시 problem_ids는 필수입니다."
+
+        # 활동 정보 조회하여 activitiable_id 획득
+        activity_resp = await client.get_activity(activity_id)
+        activity = extract_single(activity_resp)
+        activitiable_type = activity.get("activitiable_type", "")
+        activitiable_id = activity.get("activitiable_id")
+
+        if not activitiable_id:
+            return f"활동 [{activity_id}]에서 activitiable_id를 찾을 수 없습니다."
+
+        # activitiable_type에 따른 owner 필드 결정
+        owner_type = _pascal_to_snake(activitiable_type) if activitiable_type else "quiz_activity"
+
+        # ProblemCollection 생성
+        pc_attrs: dict = {
+            f"{owner_type}_id": activitiable_id,
+            "is_random": is_random,
+        }
+        if name:
+            pc_attrs["name"] = name
+        if problem_count is not None:
+            pc_attrs["problem_count"] = problem_count
+
+        pc_payload = build_jsonapi_payload("problem_collections", pc_attrs)
+        try:
+            pc_resp = await client.create_problem_collection(pc_payload)
+        except CodleAPIError as e:
+            return f"ProblemCollection 생성 실패: {e.detail}"
+        pc = extract_single(pc_resp)
+        pc_id = pc["id"]
+
+        # 문제 연결 (do_many)
+        link_items = [
+            {
+                "problem_collection_id": pc_id,
+                "problem_id": pid,
+                "position": idx,
+            }
+            for idx, pid in enumerate(problem_ids)
+        ]
+        do_many_payload = {
+            "data": {
+                "type": "problem_collections_problem",
+                "attributes": {"do_many": {"create": link_items}},
+            }
+        }
+        try:
+            await client.do_many_problem_collections_problems(do_many_payload)
+        except CodleAPIError as e:
+            return (
+                f"ProblemCollection [{pc_id}] 생성됨, 문제 연결 실패: {e.detail}. "
+                f"add_problems로 재시도하세요."
+            )
+
+        return (
+            f"ProblemCollection 생성 및 문제 연결 완료: "
+            f"[{pc_id}] (활동: {activity_id}, 문제 {len(problem_ids)}개 연결)"
+        )
+
+    elif action == "add_problems":
+        if not problem_collection_id:
+            return "add_problems 시 problem_collection_id는 필수입니다."
+        if not problem_ids:
+            return "add_problems 시 problem_ids는 필수입니다."
+
+        link_items = [
+            {
+                "problem_collection_id": problem_collection_id,
+                "problem_id": pid,
+                "position": idx,
+            }
+            for idx, pid in enumerate(problem_ids)
+        ]
+        do_many_payload = {
+            "data": {
+                "type": "problem_collections_problem",
+                "attributes": {"do_many": {"create": link_items}},
+            }
+        }
+        try:
+            await client.do_many_problem_collections_problems(do_many_payload)
+        except CodleAPIError as e:
+            return f"문제 연결 실패: {e.detail}"
+
+        return (
+            f"문제 연결 완료: ProblemCollection [{problem_collection_id}]에 "
+            f"문제 {len(problem_ids)}개 추가"
+        )
+
+    elif action == "delete":
+        if not problem_collection_id:
+            return "delete 시 problem_collection_id는 필수입니다."
+        try:
+            await client.delete_problem_collection(problem_collection_id)
+        except CodleAPIError as e:
+            return f"ProblemCollection 삭제 실패: {e.detail}"
+        return f"ProblemCollection 삭제 완료: {problem_collection_id}"
+
+    else:
+        return f"유효하지 않은 action: {action}. create, add_problems, delete 중 하나를 사용하세요."
+
+
+def _pascal_to_snake(name: str) -> str:
+    """PascalCase를 snake_case로 변환."""
+    result = []
+    for i, c in enumerate(name):
+        if c.isupper() and i > 0:
+            result.append("_")
+        result.append(c.lower())
+    return "".join(result)

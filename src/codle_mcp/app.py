@@ -22,10 +22,26 @@ mcp = FastMCP(
 | 스크래치 | ScratchActivity | scratch_activities |
 | PDF | PdfActivity | pdf_activities |
 | 문제 | Problem | problems |
+| 문제 세트 | ProblemCollection | problem_collections |
 | 태그 | Tag | tags |
 | 갈림길 | ActivityTransition (with level) | activity_transitions |
 | 코스 흐름 | ActivityTransition (linear) | activity_transitions |
 
 사용자가 "코스"라고 하면 Material, "시리즈"라고 하면 MaterialBundle을 의미합니다.
+
+## 자료 생성 전체 워크플로우
+
+스크립트/교안으로 자료를 세팅할 때 아래 순서를 따르세요:
+
+1. **태그 확인**: manage_tags로 필요한 태그 ID 조회
+2. **시리즈 확인**: list_bundles/get_bundle_detail로 기존 시리즈 확인 (없으면 manage_bundle로 생성)
+3. **자료 생성**: create_material (시리즈에 포함 시 material_bundle_id, position 지정)
+4. **활동 순차 생성**: manage_activities(action="create")를 코스 흐름 순서대로 호출
+   - 활동은 반드시 순서대로 생성 (자동 체이닝)
+   - 갈림길은 마지막에 생성: mid를 먼저, 이후 low/high
+5. **문제 생성**: upsert_problem으로 퀴즈/활동지 문제 생성
+6. **문제 연결**: manage_problem_collections(action="create")로 활동에 문제 연결
+   - QuizActivity, SheetActivity 등 문제 기반 활동에 필수
+7. **검증**: get_material_detail로 활동 목록, 유형, 분기, 문제 연결 확인
 """,
 )

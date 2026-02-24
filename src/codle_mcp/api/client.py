@@ -214,6 +214,20 @@ class CodleClient:
     async def list_problem_collections(self, params: dict | None = None) -> dict:
         return await self._request("GET", "/api/v1/problem_collections", params=params)
 
+    async def create_problem_collection(self, data: dict) -> dict:
+        return await self._request("POST", "/api/v1/problem_collections", json=data)
+
+    async def update_problem_collection(self, collection_id: str, data: dict) -> dict:
+        return await self._request("PUT", f"/api/v1/problem_collections/{collection_id}", json=data)
+
+    async def delete_problem_collection(self, collection_id: str) -> dict:
+        return await self._request("DELETE", f"/api/v1/problem_collections/{collection_id}")
+
+    # --- Problem Collections Problems ---
+
+    async def do_many_problem_collections_problems(self, data: dict) -> dict:
+        return await self._request("POST", "/api/v1/problem_collections_problems/do_many", json=data)
+
     # --- Quiz Activities ---
 
     async def create_quiz_activity(self, data: dict) -> dict:
