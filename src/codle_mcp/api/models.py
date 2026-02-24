@@ -28,14 +28,29 @@ def extract_included(response: dict, resource_type: str) -> list[dict[str, Any]]
     return [extract_attributes(item) for item in included if item.get("type") == resource_type]
 
 
-def build_jsonapi_payload(resource_type: str, attributes: dict, resource_id: str | None = None) -> dict:
-    """JSON:API 형식의 요청 페이로드 생성."""
+def build_jsonapi_payload(
+    resource_type: str,
+    attributes: dict,
+    resource_id: str | None = None,
+    relationships: dict | None = None,
+) -> dict:
+    """JSON:API 형식의 요청 페이로드 생성.
+
+    Args:
+        resource_type: JSON:API resource type (e.g. "activities")
+        attributes: 속성 dict (None 값은 제외됨)
+        resource_id: 리소스 ID (update 시 필수)
+        relationships: JSON:API relationships dict.
+            예: {"activitiable": {"data": {"type": "quiz_activity", "id": "123"}}}
+    """
     data: dict[str, Any] = {
         "type": resource_type,
         "attributes": {k: v for k, v in attributes.items() if v is not None},
     }
     if resource_id:
         data["id"] = resource_id
+    if relationships:
+        data["relationships"] = relationships
     return {"data": data}
 
 

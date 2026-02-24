@@ -147,13 +147,16 @@ async def manage_activities(
             "name": name,
             "material_id": material_id,
             "depth": depth,
-            "activitiable_type": activity_type,
-            "activitiable_id": activitiable_id,
         }
         if tag_ids:
             attrs["tag_ids"] = tag_ids
 
-        payload = build_jsonapi_payload("activities", attrs)
+        relationships = {
+            "activitiable": {
+                "data": {"type": jsonapi_type, "id": activitiable_id}
+            }
+        }
+        payload = build_jsonapi_payload("activities", attrs, relationships=relationships)
         response = await client.create_activity(payload)
         activity = extract_single(response)
         new_id = activity["id"]
