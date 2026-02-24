@@ -1,8 +1,10 @@
+import json as _json
 from typing import Any
 
 import httpx
 
 from codle_mcp.config import settings
+from codle_mcp.log import logger
 
 
 class CodleAPIError(Exception):
@@ -49,10 +51,12 @@ class CodleClient:
                 },
             )
             if not response.is_success:
+                logger.error("인증 실패: %d %s", response.status_code, response.text[:200])
                 raise CodleAPIError(response.status_code, f"인증 실패: {response.text}")
             data = response.json()
             self._access_token = data["access_token"]
             self._refresh_token = data.get("refresh_token", "")
+            logger.info("인증 성공 (email=%s)", self._email)
             await self._fetch_user_id()
 
     async def _fetch_user_id(self) -> None:
@@ -98,20 +102,36 @@ class CodleClient:
         if not self._access_token and self._can_auto_auth():
             await self._authenticate()
 
+    def _log_request(self, method: str, path: str, **kwargs) -> None:
+        parts = [f"{method} {path}"]
+        if kwargs.get("params"):
+            parts.append(f"params={kwargs['params']}")
+        if kwargs.get("json"):
+            body = _json.dumps(kwargs["json"], ensure_ascii=False)
+            if len(body) > 500:
+                body = body[:500] + "..."
+            parts.append(f"body={body}")
+        logger.debug(" ".join(parts))
+
     async def _request(self, method: str, path: str, **kwargs) -> dict[str, Any]:
         await self.ensure_auth()
+        self._log_request(method, path, **kwargs)
 
         response = await self._client.request(method, path, headers=self._auth_headers(), **kwargs)
 
         # 401 → refresh 시도, 실패 시 재인증
         if response.status_code == 401 and self._can_auto_auth():
+            logger.info("401 → 토큰 갱신 시도")
             refreshed = await self._refresh()
             if not refreshed:
                 await self._authenticate()
             response = await self._client.request(method, path, headers=self._auth_headers(), **kwargs)
 
         if not response.is_success:
+            logger.warning("%s %s → %d: %s", method, path, response.status_code, response.text[:300])
             raise CodleAPIError(response.status_code, response.text)
+
+        logger.debug("%s %s → %d", method, path, response.status_code)
         if response.status_code == 204 or not response.content:
             return {}
         return response.json()

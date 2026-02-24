@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     email: str = ""
     password: str = ""
     client_id: str = ""
+    log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
 
     model_config = {"env_prefix": "CODLE_", "env_file": ".env"}
 
