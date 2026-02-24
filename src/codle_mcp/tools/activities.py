@@ -24,12 +24,6 @@ ACTIVITIABLE_ENDPOINTS = {
 
 ACTIVITIABLE_TYPES = list(ACTIVITIABLE_ENDPOINTS.keys())
 
-# activity_type → JSON:API type (snake_case)
-ACTIVITIABLE_JSONAPI_TYPES = {
-    k: k[0].lower() + k[1:].replace("A", "_a").replace("H", "_h").replace("G", "_g").replace("M", "_m").replace("C", "_c").replace("E", "_e").replace("P", "_p").replace("S", "_s").replace("V", "_v").replace("B", "_b").replace("R", "_r")
-    for k in ACTIVITIABLE_ENDPOINTS
-}
-
 
 def _pascal_to_snake(name: str) -> str:
     """PascalCase를 snake_case로 변환."""
@@ -41,6 +35,30 @@ def _pascal_to_snake(name: str) -> str:
     return "".join(result)
 
 
+async def _create_transition(before_id: str, after_id: str, level: str | None = None) -> None:
+    """activity_transition 생성."""
+    attrs: dict = {"before_activity_id": before_id, "after_activity_id": after_id}
+    if level:
+        attrs["level"] = level
+    payload = {"data": {"type": "activity_transition", "attributes": attrs}}
+    await client.create_activity_transition(payload)
+
+
+async def _find_tail_activity(material_id: str, exclude_id: str) -> str | None:
+    """material의 마지막 활동(outgoing transition 없는 활동) ID를 반환."""
+    mat_resp = await client.get_material(material_id, {"include": "activities,activity_transitions"})
+    included = mat_resp.get("included", [])
+    transitions = [i for i in included if i.get("type") == "activity_transition"]
+    existing_ids = [i["id"] for i in included if i.get("type") == "activity" and i["id"] != exclude_id]
+
+    if not existing_ids:
+        return None
+
+    before_ids = {str(t["attributes"]["before_activity_id"]) for t in transitions}
+    tails = [aid for aid in existing_ids if aid not in before_ids]
+    return tails[0] if len(tails) == 1 else None
+
+
 @mcp.tool()
 async def manage_activities(
     action: str,
@@ -50,10 +68,20 @@ async def manage_activities(
     activity_type: str | None = None,
     depth: int = 0,
     tag_ids: list[str] | None = None,
+    branch_from: str | None = None,
+    branch_level: str | None = None,
 ) -> str:
     """자료(Material) 내 활동(Activity)을 추가, 수정, 삭제합니다.
 
     활동은 자료를 구성하는 단위입니다. 퀴즈, 코딩, 보드, 영상 등 다양한 유형을 지원합니다.
+    create 시 이전 활동과의 연결(transition)이 자동 생성됩니다.
+
+    갈림길(branch) 생성 시: branch_from에 분기점 활동 ID, branch_level에 레벨을 지정합니다.
+    갈림길은 반드시 mid를 포함하고, low/high 중 1개 이상이 필요합니다.
+    예) 활동 13에서 3갈래 분기:
+      create(..., branch_from="13", branch_level="low")   # 보완
+      create(..., branch_from="13", branch_level="mid")   # 기본 (필수)
+      create(..., branch_from="13", branch_level="high")  # 정복
 
     Args:
         action: 수행할 작업 ("create", "update", "delete", "duplicate")
@@ -66,21 +94,27 @@ async def manage_activities(
             CodapActivity, EmbeddedActivity, SocroomActivity, AiRecommendQuizActivity
         depth: 활동 깊이 (0=h1, 1=h2, 2=h3)
         tag_ids: 연결할 태그 ID 목록
+        branch_from: 갈림길 분기점 활동 ID. 지정 시 자동 체이닝 대신 해당 활동에서 분기
+        branch_level: 갈림길 레벨 ("low"=보완, "mid"=기본, "high"=정복). branch_from과 함께 사용
     """
     if action == "create":
         if not material_id or not name or not activity_type:
             return "create 시 material_id, name, activity_type은 필수입니다."
         if activity_type not in ACTIVITIABLE_TYPES:
             return f"유효하지 않은 activity_type: {activity_type}. 사용 가능: {', '.join(ACTIVITIABLE_TYPES)}"
+        if branch_from and not branch_level:
+            return "branch_from 지정 시 branch_level(low/mid/high)도 필수입니다."
+        if branch_level and branch_level not in ("low", "mid", "high"):
+            return f"유효하지 않은 branch_level: {branch_level}. low, mid, high 중 하나를 사용하세요."
 
-        # 1단계: activitiable 생성 (QuizActivity, StudioActivity 등)
+        # 1단계: activitiable 생성
         endpoint = ACTIVITIABLE_ENDPOINTS[activity_type]
         jsonapi_type = _pascal_to_snake(activity_type)
         activitiable_payload = {"data": {"type": jsonapi_type, "attributes": {}}}
         activitiable_response = await client._request("POST", endpoint, json=activitiable_payload)
         activitiable_id = activitiable_response["data"]["id"]
 
-        # 2단계: activity 생성 (activitiable 연결)
+        # 2단계: activity 생성
         attrs: dict = {
             "name": name,
             "material_id": material_id,
@@ -96,29 +130,19 @@ async def manage_activities(
         activity = extract_single(response)
         new_id = activity["id"]
 
-        # 선형 체이닝: 기존 마지막 활동 → 새 활동 transition 자동 생성
+        # 3단계: transition 생성
         chain_msg = ""
         try:
-            mat_resp = await client.get_material(material_id, {"include": "activities,activity_transitions"})
-            included = mat_resp.get("included", [])
-            transitions = [i for i in included if i.get("type") == "activity_transition"]
-            existing_ids = [i["id"] for i in included if i.get("type") == "activity" and i["id"] != new_id]
-
-            if existing_ids:
-                before_ids = {str(t["attributes"]["before_activity_id"]) for t in transitions}
-                tails = [aid for aid in existing_ids if aid not in before_ids]
-                if len(tails) == 1:
-                    transition_payload = {
-                        "data": {
-                            "type": "activity_transition",
-                            "attributes": {
-                                "before_activity_id": tails[0],
-                                "after_activity_id": new_id,
-                            },
-                        }
-                    }
-                    await client.create_activity_transition(transition_payload)
-                    chain_msg = f", {tails[0]} → {new_id} 연결됨"
+            if branch_from and branch_level:
+                # 갈림길: branch_from → 새 활동 (level 지정)
+                await _create_transition(branch_from, new_id, branch_level)
+                chain_msg = f", 갈림길 {branch_from} →({branch_level}) {new_id}"
+            else:
+                # 선형 체이닝: tail → 새 활동
+                tail = await _find_tail_activity(material_id, new_id)
+                if tail:
+                    await _create_transition(tail, new_id)
+                    chain_msg = f", {tail} → {new_id} 연결됨"
         except CodleAPIError as e:
             chain_msg = f", 체이닝 실패: {e.detail}"
 
