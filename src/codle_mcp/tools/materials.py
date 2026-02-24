@@ -4,6 +4,7 @@ from codle_mcp.api.models import (
     extract_list,
     extract_single,
     format_material_summary,
+    snake_to_pascal,
 )
 from codle_mcp.app import mcp
 
@@ -70,9 +71,18 @@ async def get_material_detail(material_id: str) -> str:
     material = extract_single(response)
 
     included = response.get("included", [])
-    activities = [
-        {"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "activity"
-    ]
+    activities = []
+    for i in included:
+        if i.get("type") != "activity":
+            continue
+        a = {"id": i["id"], **i.get("attributes", {})}
+        # activitiable_type이 attributes에 없으면 relationships에서 추출
+        if not a.get("activitiable_type"):
+            rel = (i.get("relationships") or {}).get("activitiable", {}).get("data") or {}
+            if rel.get("id"):
+                a["activitiable_id"] = rel["id"]
+                a["activitiable_type"] = snake_to_pascal(rel.get("type", ""))
+        activities.append(a)
     tags = [{"id": i["id"], **i.get("attributes", {})} for i in included if i.get("type") == "tag"]
     transitions = [
         {"id": i["id"], **i.get("attributes", {})}

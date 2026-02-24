@@ -55,3 +55,11 @@ def format_bundle_summary(bundle: dict) -> str:
     """MaterialBundle을 LLM이 읽기 쉬운 텍스트로 포맷."""
     published = "게시됨" if bundle.get("is_published") else "미게시"
     return f"- [{bundle['id']}] {bundle.get('title', '(무제)')} ({published})"
+
+
+def snake_to_pascal(name: str) -> str:
+    """snake_case를 PascalCase로 변환.
+
+    예: "quiz_activity" → "QuizActivity"
+    """
+    return name.replace("_", " ").title().replace(" ", "")

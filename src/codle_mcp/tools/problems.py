@@ -4,6 +4,7 @@ from codle_mcp.api.models import (
     extract_list,
     extract_single,
     format_problem_summary,
+    snake_to_pascal,
 )
 from codle_mcp.app import mcp
 
@@ -160,9 +161,17 @@ async def manage_problem_collections(
 
         # 활동 정보 조회하여 activitiable_id 획득
         activity_resp = await client.get_activity(activity_id)
-        activity = extract_single(activity_resp)
-        activitiable_type = activity.get("activitiable_type", "")
-        activitiable_id = activity.get("activitiable_id")
+        data = activity_resp.get("data", {})
+        attrs = data.get("attributes", {})
+        activitiable_id = attrs.get("activitiable_id")
+        activitiable_type = attrs.get("activitiable_type", "")
+
+        # Fallback: JSONAPI relationships에서 polymorphic 관계 추출
+        if not activitiable_id:
+            rel = (data.get("relationships") or {}).get("activitiable", {}).get("data") or {}
+            activitiable_id = rel.get("id")
+            raw_type = rel.get("type", "")  # snake_case (e.g. "quiz_activity")
+            activitiable_type = snake_to_pascal(raw_type) if raw_type else ""
 
         if not activitiable_id:
             return f"활동 [{activity_id}]에서 activitiable_id를 찾을 수 없습니다."
