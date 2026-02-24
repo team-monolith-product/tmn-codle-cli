@@ -73,26 +73,48 @@ async def manage_activities(
 ) -> str:
     """자료(Material) 내 활동(Activity)을 추가, 수정, 삭제합니다.
 
-    활동은 자료를 구성하는 단위입니다. 퀴즈, 코딩, 보드, 영상 등 다양한 유형을 지원합니다.
-    create 시 이전 활동과의 연결(transition)이 자동 생성됩니다.
+    활동은 자료를 구성하는 학습 단위입니다. 순서대로 생성하면 자동으로 선형 연결됩니다.
 
-    갈림길(branch) 생성 시: branch_from에 분기점 활동 ID, branch_level에 레벨을 지정합니다.
-    갈림길은 반드시 mid를 포함하고, low/high 중 1개 이상이 필요합니다.
-    예) 활동 13에서 3갈래 분기:
-      create(..., branch_from="13", branch_level="low")   # 보완
-      create(..., branch_from="13", branch_level="mid")   # 기본 (필수)
-      create(..., branch_from="13", branch_level="high")  # 정복
+    ## 활동 유형 매핑
+    입력 스크립트의 키워드 → activity_type:
+    - 교안, 교안 실습 → HtmlActivity
+    - 퀴즈 → QuizActivity
+    - 보드 → BoardActivity
+    - 활동지 → SheetActivity
+    - 코딩, Python → StudioActivity
+    - 영상 → VideoActivity
+    - 엔트리 → EntryActivity
+    - 스크래치 → ScratchActivity
+    - PDF → PdfActivity
+
+    ## 자동 연결
+    활동을 순서대로 create하면 이전 활동 → 새 활동 transition이 자동 생성됩니다.
+    반드시 코스 흐름 순서대로 생성하세요.
+
+    ## depth (들여쓰기)
+    - 0: 메인 활동 (코스 흐름에서 독립 노드)
+    - 1: 하위 활동 (직전 depth=0 활동의 하위로 들여쓰기 표시)
+    - 2: 하위의 하위
+
+    ## 갈림길(branch)
+    코스 끝에 보완/기본/정복 갈림길을 만들려면 branch_from + branch_level을 지정합니다.
+    갈림길은 반드시 mid를 포함하고, low/high 중 1개 이상 필요합니다.
+    예) 활동 "48330"에서 3갈래 분기:
+      create(..., branch_from="48330", branch_level="low")   # 보완 (갈림길 하)
+      create(..., branch_from="48330", branch_level="mid")   # 기본 (갈림길 중)
+      create(..., branch_from="48330", branch_level="high")  # 정복 (갈림길 상)
 
     Args:
         action: 수행할 작업 ("create", "update", "delete", "duplicate")
         material_id: 자료 ID (create 시 필수)
         activity_id: 활동 ID (update, delete, duplicate 시 필수)
         name: 활동 이름 (create 시 필수, 최대 64자)
-        activity_type: 활동 유형 (create 시 필수). 사용 가능: QuizActivity, StudioActivity,
-            EntryActivity, ScratchActivity, BoardActivity, VideoActivity, PdfActivity,
-            SheetActivity, HtmlActivity, GenerativeHtmlActivity, MakecodeActivity,
-            CodapActivity, EmbeddedActivity, SocroomActivity, AiRecommendQuizActivity
-        depth: 활동 깊이 (0=h1, 1=h2, 2=h3)
+        activity_type: 활동 유형 (create 시 필수). 주요: HtmlActivity, QuizActivity,
+            BoardActivity, SheetActivity, StudioActivity, VideoActivity.
+            기타: EntryActivity, ScratchActivity, PdfActivity, GenerativeHtmlActivity,
+            MakecodeActivity, CodapActivity, EmbeddedActivity, SocroomActivity,
+            AiRecommendQuizActivity
+        depth: 활동 깊이 (0=메인, 1=하위, 2=하위의 하위). 기본 0
         tag_ids: 연결할 태그 ID 목록
         branch_from: 갈림길 분기점 활동 ID. 지정 시 자동 체이닝 대신 해당 활동에서 분기
         branch_level: 갈림길 레벨 ("low"=보완, "mid"=기본, "high"=정복). branch_from과 함께 사용

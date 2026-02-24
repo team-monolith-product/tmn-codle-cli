@@ -24,7 +24,7 @@ async def search_materials(
     Args:
         query: 검색 키워드 (자료 이름에서 검색)
         tag_ids: 필터링할 태그 ID 목록
-        is_public: 공개 여부 필터 (True=공개, False=비공개, None=전체)
+        is_public: 공개 여부 필터 (True=공개 자료, False/None=내 자료만)
         page_size: 페이지당 결과 수 (기본 20, 최대 100)
         page_number: 페이지 번호 (1부터 시작)
     """
@@ -115,7 +115,7 @@ async def create_material(
     """새 자료(Material)를 생성합니다.
 
     자료는 여러 활동(Activity)을 담는 컨테이너입니다.
-    자료 생성 후 manage_activities로 활동을 추가하세요.
+    전체 워크플로우: create_material → manage_activities(create)를 순서대로 반복 → 갈림길 추가.
     user_id는 인증된 사용자로 자동 설정됩니다.
 
     Args:
