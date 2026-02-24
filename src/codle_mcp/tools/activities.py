@@ -3,23 +3,42 @@ from codle_mcp.api.models import build_jsonapi_payload, extract_single
 from codle_mcp.app import mcp
 
 
-ACTIVITIABLE_TYPES = [
-    "QuizActivity",
-    "StudioActivity",
-    "EntryActivity",
-    "ScratchActivity",
-    "BoardActivity",
-    "VideoActivity",
-    "PdfActivity",
-    "SheetActivity",
-    "HtmlActivity",
-    "GenerativeHtmlActivity",
-    "MakecodeActivity",
-    "CodapActivity",
-    "EmbeddedActivity",
-    "SocroomActivity",
-    "AiRecommendQuizActivity",
-]
+# activity_type → activitiable 생성 API 경로
+ACTIVITIABLE_ENDPOINTS = {
+    "QuizActivity": "/api/v1/quiz_activities",
+    "StudioActivity": "/api/v1/studio_activities",
+    "EntryActivity": "/api/v1/entry_activities",
+    "ScratchActivity": "/api/v1/scratch_activities",
+    "BoardActivity": "/api/v1/board_activities",
+    "VideoActivity": "/api/v1/video_activities",
+    "PdfActivity": "/api/v1/pdf_activities",
+    "SheetActivity": "/api/v1/sheet_activities",
+    "HtmlActivity": "/api/v1/html_activities",
+    "GenerativeHtmlActivity": "/api/v1/generative_html_activities",
+    "MakecodeActivity": "/api/v1/makecode_activities",
+    "CodapActivity": "/api/v1/codap_activities",
+    "EmbeddedActivity": "/api/v1/embedded_activities",
+    "SocroomActivity": "/api/v1/socroom_activities",
+    "AiRecommendQuizActivity": "/api/v1/ai_recommend_quiz_activities",
+}
+
+ACTIVITIABLE_TYPES = list(ACTIVITIABLE_ENDPOINTS.keys())
+
+# activity_type → JSON:API type (snake_case)
+ACTIVITIABLE_JSONAPI_TYPES = {
+    k: k[0].lower() + k[1:].replace("A", "_a").replace("H", "_h").replace("G", "_g").replace("M", "_m").replace("C", "_c").replace("E", "_e").replace("P", "_p").replace("S", "_s").replace("V", "_v").replace("B", "_b").replace("R", "_r")
+    for k in ACTIVITIABLE_ENDPOINTS
+}
+
+
+def _pascal_to_snake(name: str) -> str:
+    """PascalCase를 snake_case로 변환."""
+    result = []
+    for i, c in enumerate(name):
+        if c.isupper() and i > 0:
+            result.append("_")
+        result.append(c.lower())
+    return "".join(result)
 
 
 @mcp.tool()
@@ -54,11 +73,20 @@ async def manage_activities(
         if activity_type not in ACTIVITIABLE_TYPES:
             return f"유효하지 않은 activity_type: {activity_type}. 사용 가능: {', '.join(ACTIVITIABLE_TYPES)}"
 
+        # 1단계: activitiable 생성 (QuizActivity, StudioActivity 등)
+        endpoint = ACTIVITIABLE_ENDPOINTS[activity_type]
+        jsonapi_type = _pascal_to_snake(activity_type)
+        activitiable_payload = {"data": {"type": jsonapi_type, "attributes": {}}}
+        activitiable_response = await client._request("POST", endpoint, json=activitiable_payload)
+        activitiable_id = activitiable_response["data"]["id"]
+
+        # 2단계: activity 생성 (activitiable 연결)
         attrs: dict = {
             "name": name,
             "material_id": material_id,
             "depth": depth,
             "activitiable_type": activity_type,
+            "activitiable_id": activitiable_id,
         }
         if tag_ids:
             attrs["tag_ids"] = tag_ids

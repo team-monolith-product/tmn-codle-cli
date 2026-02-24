@@ -16,14 +16,15 @@ class CodleClient:
     """jce-class-rails API 클라이언트."""
 
     def __init__(self):
-        self.base_url = settings.codle_api_url.rstrip("/")
-        self.token = settings.codle_token
+        self.base_url = settings.api_url.rstrip("/")
+        self.token = settings.token
         headers = {
             "Content-Type": "application/vnd.api+json",
             "Accept": "application/vnd.api+json",
         }
         if self.token:
-            headers["Authorization"] = self.token
+            token = self.token if self.token.startswith("Bearer ") else f"Bearer {self.token}"
+            headers["Authorization"] = token
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
             headers=headers,
