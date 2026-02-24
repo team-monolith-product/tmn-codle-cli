@@ -112,7 +112,7 @@ class CodleClient:
 
         if not response.is_success:
             raise CodleAPIError(response.status_code, response.text)
-        if response.status_code == 204:
+        if response.status_code == 204 or not response.content:
             return {}
         return response.json()
 
