@@ -13,11 +13,18 @@ npm run build
 
 ## 인증 설정
 
-Codle 계정의 이메일/비밀번호로 자동 인증한다. 토큰 발급과 만료 시 갱신이 자동으로 처리된다.
+PAT(Personal Access Token)을 사용하여 인증한다. Codle 서비스에서 발급받은 access token을 `CODLE_ACCESS_TOKEN` 환경변수에 설정한다.
 
 필요한 정보:
-- Codle 계정 이메일/비밀번호
-- OAuth Client ID (`CODLE_REACT_APP_UID` 환경변수 값, 인프라팀에 문의)
+- Codle PAT (access token)
+
+## 서버 실행
+
+```bash
+CODLE_ACCESS_TOKEN=your-pat-token CODLE_AUTH_URL=https://user.dev.codle.io node dist/index.js
+```
+
+기본 포트는 3000. `CODLE_PORT`로 변경 가능.
 
 ## Claude Code 설정
 
@@ -27,15 +34,8 @@ Codle 계정의 이메일/비밀번호로 자동 인증한다. 토큰 발급과 
 {
   "mcpServers": {
     "codle": {
-      "command": "node",
-      "args": ["path/to/tmn-codle-mcp/dist/index.js"],
-      "env": {
-        "CODLE_API_URL": "https://class.dev.codle.io",
-        "CODLE_AUTH_URL": "https://user.dev.codle.io",
-        "CODLE_EMAIL": "teacher@example.com",
-        "CODLE_PASSWORD": "your-password",
-        "CODLE_CLIENT_ID": "your-client-id"
-      }
+      "type": "http",
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
@@ -58,6 +58,7 @@ Codle 계정의 이메일/비밀번호로 자동 인증한다. 토큰 발급과 
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 인증 실패 | 잘못된 이메일/비밀번호/Client ID | 환경변수 확인 |
+| CODLE_ACCESS_TOKEN 에러 | PAT 미설정 | 환경변수에 토큰 설정 |
+| 401 Unauthorized | 토큰 만료 | PAT 재발급 |
 | Connection refused | API URL 오류 | `CODLE_API_URL`, `CODLE_AUTH_URL` 확인 |
 | Cannot find module | 빌드 안 됨 | `npm run build` 실행 |

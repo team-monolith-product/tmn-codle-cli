@@ -1,11 +1,36 @@
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createServer } from "node:http";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { server } from "./server.js";
 import { registerAllTools } from "./tools/register.js";
 
 registerAllTools(server);
 
-logger.info("codle-mcp 서버 시작");
+const transport = new StreamableHTTPServerTransport({
+  sessionIdGenerator: undefined,
+});
 
-const transport = new StdioServerTransport();
 await server.connect(transport);
+
+const httpServer = createServer(async (req, res) => {
+  const url = req.url ?? "";
+
+  if (url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
+  if (url === "/mcp") {
+    await transport.handleRequest(req, res);
+    return;
+  }
+
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: "Not Found" }));
+});
+
+httpServer.listen(config.port, () => {
+  logger.info("codle-mcp HTTP 서버 시작 (port=%d)", config.port);
+});

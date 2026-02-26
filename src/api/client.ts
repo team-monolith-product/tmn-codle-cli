@@ -4,47 +4,15 @@ import { CodleAPIError, extractErrorDetail } from "./errors.js";
 
 export class CodleClient {
   private baseUrl: string;
-  private accessToken = "";
-  private refreshToken = "";
+  private accessToken: string;
   userId = "";
   private authUrl: string;
-  private email: string;
-  private password: string;
-  private clientId: string;
+  private userIdFetched = false;
 
   constructor() {
     this.baseUrl = config.apiUrl;
     this.authUrl = config.authUrl;
-    this.email = config.email;
-    this.password = config.password;
-    this.clientId = config.clientId;
-  }
-
-  private canAutoAuth(): boolean {
-    return !!(this.authUrl && this.email && this.password && this.clientId);
-  }
-
-  private async authenticate(): Promise<void> {
-    const response = await fetch(`${this.authUrl}/oauth/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "password",
-        username: this.email,
-        password: this.password,
-        client_id: this.clientId,
-      }),
-    });
-    if (!response.ok) {
-      const text = await response.text();
-      logger.error("인증 실패: %d %s", response.status, text.slice(0, 200));
-      throw new CodleAPIError(response.status, `인증 실패: ${text}`);
-    }
-    const data = (await response.json()) as Record<string, string>;
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token || "";
-    logger.info("인증 성공 (email=%s)", this.email);
-    await this.fetchUserId();
+    this.accessToken = config.accessToken;
   }
 
   private async fetchUserId(): Promise<void> {
@@ -58,24 +26,6 @@ export class CodleClient {
     }
   }
 
-  private async refresh(): Promise<boolean> {
-    if (!this.refreshToken || !this.authUrl || !this.clientId) return false;
-    const response = await fetch(`${this.authUrl}/oauth/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: this.refreshToken,
-        client_id: this.clientId,
-      }),
-    });
-    if (!response.ok) return false;
-    const data = (await response.json()) as Record<string, string>;
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token || this.refreshToken;
-    return true;
-  }
-
   private authHeaders(): Record<string, string> {
     if (this.accessToken) {
       return { Authorization: `Bearer ${this.accessToken}` };
@@ -84,8 +34,15 @@ export class CodleClient {
   }
 
   async ensureAuth(): Promise<void> {
-    if (!this.accessToken && this.canAutoAuth()) {
-      await this.authenticate();
+    if (!this.accessToken) {
+      throw new CodleAPIError(
+        401,
+        "CODLE_ACCESS_TOKEN이 설정되지 않았습니다. PAT를 환경변수에 설정하세요."
+      );
+    }
+    if (!this.userIdFetched) {
+      this.userIdFetched = true;
+      await this.fetchUserId();
     }
   }
 
@@ -150,19 +107,7 @@ export class CodleClient {
     };
     if (json) fetchOptions.body = JSON.stringify(json);
 
-    let response = await fetch(url, fetchOptions);
-
-    if (response.status === 401 && this.canAutoAuth()) {
-      logger.info("401 → 토큰 갱신 시도");
-      const refreshed = await this.refresh();
-      if (!refreshed) await this.authenticate();
-      fetchOptions.headers = {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        ...this.authHeaders(),
-      };
-      response = await fetch(url, fetchOptions);
-    }
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
       const text = await response.text();

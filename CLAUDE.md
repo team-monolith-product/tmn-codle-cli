@@ -19,12 +19,12 @@
 
 ```
 src/
-├── index.ts          # Entry point (stdio transport)
+├── index.ts          # Entry point (HTTP transport)
 ├── server.ts         # McpServer 인스턴스 + instructions
 ├── config.ts         # 환경변수 (dotenv)
 ├── logger.ts         # stderr 로깅
 ├── api/
-│   ├── client.ts     # CodleClient (fetch, OAuth2, retry)
+│   ├── client.ts     # CodleClient (fetch, PAT 인증)
 │   ├── models.ts     # JSON:API 유틸
 │   └── errors.ts     # CodleAPIError
 └── tools/
@@ -33,6 +33,11 @@ src/
     ├── materials.ts
     └── tags.ts
 ```
+
+## 인증
+
+PAT(Personal Access Token) 방식. `CODLE_ACCESS_TOKEN` 환경변수로 설정.
+토큰 만료 시 자동 갱신 없음 — PAT 재발급 필요.
 
 ## API 제약사항
 
