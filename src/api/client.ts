@@ -5,11 +5,9 @@ import { CodleAPIError, extractErrorDetail } from "./errors.js";
 
 export class CodleClient {
   private baseUrl: string;
-  private authUrl: string;
 
   constructor() {
     this.baseUrl = config.apiUrl;
-    this.authUrl = config.authUrl;
   }
 
   private getToken(): string {

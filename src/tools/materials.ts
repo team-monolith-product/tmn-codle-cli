@@ -134,11 +134,6 @@ export function registerMaterialTools(server: McpServer): void {
       }
 
       if (activities.length) {
-        const activityNames: Record<string, string> = {};
-        for (const a of activities) {
-          activityNames[String(a.id)] = String(a.name ?? "(무제)");
-        }
-
         lines.push(`\n활동 (${activities.length}개):`);
         for (const a of activities) {
           const rawDepth = a.depth ?? 0;

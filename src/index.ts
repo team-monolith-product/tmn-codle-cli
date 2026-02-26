@@ -27,6 +27,11 @@ const httpServer = createServer(async (req, res) => {
 
     await server.connect(transport);
 
+    res.on("close", () => {
+      transport.close();
+      server.close();
+    });
+
     await requestContext.run({ accessToken }, () =>
       transport.handleRequest(req, res)
     );
