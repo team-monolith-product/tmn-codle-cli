@@ -73,13 +73,6 @@ export function formatProblemSummary(
   return `- [${problem.id}] ${problem.title ?? "(무제)"} (type: ${ptype})`;
 }
 
-export function formatBundleSummary(
-  bundle: Record<string, unknown>
-): string {
-  const published = bundle.is_published ? "게시됨" : "미게시";
-  return `- [${bundle.id}] ${bundle.title ?? "(무제)"} (${published})`;
-}
-
 export function snakeToPascal(name: string): string {
   return name
     .split("_")

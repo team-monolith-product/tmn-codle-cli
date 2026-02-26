@@ -32,7 +32,6 @@ src/
     ├── activities.ts
     ├── materials.ts
     ├── problems.ts
-    ├── bundles.ts
     └── tags.ts
 ```
 

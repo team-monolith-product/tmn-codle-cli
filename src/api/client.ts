@@ -300,52 +300,6 @@ export class CodleClient {
     return this.request("POST", "/api/v1/activities/do_many", { json: data });
   }
 
-  // --- Material Bundles ---
-  async listMaterialBundles(
-    params?: Record<string, string | number | boolean>
-  ): Promise<Record<string, unknown>> {
-    return this.request("GET", "/api/v1/material_bundles", { params });
-  }
-
-  async getMaterialBundle(
-    bundleId: string,
-    params?: Record<string, string | number | boolean>
-  ): Promise<Record<string, unknown>> {
-    return this.request("GET", `/api/v1/material_bundles/${bundleId}`, {
-      params,
-    });
-  }
-
-  async createMaterialBundle(
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("POST", "/api/v1/material_bundles", { json: data });
-  }
-
-  async updateMaterialBundle(
-    bundleId: string,
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/api/v1/material_bundles/${bundleId}`, {
-      json: data,
-    });
-  }
-
-  async deleteMaterialBundle(
-    bundleId: string
-  ): Promise<Record<string, unknown>> {
-    return this.request("DELETE", `/api/v1/material_bundles/${bundleId}`);
-  }
-
-  async duplicateMaterialBundle(
-    bundleId: string
-  ): Promise<Record<string, unknown>> {
-    return this.request(
-      "POST",
-      `/api/v1/material_bundles/${bundleId}/duplicate`
-    );
-  }
-
   // --- Activity Transitions ---
   async createActivityTransition(
     data: Record<string, unknown>

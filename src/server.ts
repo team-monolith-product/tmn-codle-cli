@@ -7,14 +7,13 @@ export const server = new McpServer(
   },
   {
     instructions: `Codle는 인터랙티브 학습 플랫폼입니다.
-이 MCP 서버는 Codle의 자료, 문제, 활동, 시리즈, 태그 데이터를 조회하고 관리할 수 있는 도구를 제공합니다.
+이 MCP 서버는 Codle의 자료, 문제, 활동, 태그 데이터를 조회하고 관리할 수 있는 도구를 제공합니다.
 
 ## 용어 매핑 (서비스 용어 = 개발 용어)
 
 | 서비스 용어 | 개발 용어 | API 리소스 |
 |---|---|---|
 | 코스, 자료 | Material | materials |
-| 시리즈, 번들 | MaterialBundle | material_bundles |
 | 활동 | Activity | activities |
 | 퀴즈 | QuizActivity | quiz_activities |
 | 교안, 교안 실습 | HtmlActivity | html_activities |
@@ -31,15 +30,14 @@ export const server = new McpServer(
 | 갈림길 | ActivityTransition (with level) | activity_transitions |
 | 코스 흐름 | ActivityTransition (linear) | activity_transitions |
 
-사용자가 "코스"라고 하면 Material, "시리즈"라고 하면 MaterialBundle을 의미합니다.
+사용자가 "코스"라고 하면 Material을 의미합니다.
 
 ## 자료 생성 전체 워크플로우
 
 스크립트/교안으로 자료를 세팅할 때 아래 순서를 따르세요:
 
 1. **태그 확인**: manage_tags로 필요한 태그 ID 조회
-2. **시리즈 확인**: list_bundles/get_bundle_detail로 기존 시리즈 확인 (없으면 manage_bundle로 생성)
-3. **자료 생성**: create_material (시리즈에 포함 시 material_bundle_id, position 지정)
+2. **자료 생성**: create_material
 4. **활동 순차 생성**: manage_activities(action="create")를 코스 흐름 순서대로 호출
    - 활동은 반드시 순서대로 생성 (자동 체이닝)
    - 갈림길 활동도 manage_activities로 생성 (branch_from 지정 → auto-chain 없이 활동만 생성)

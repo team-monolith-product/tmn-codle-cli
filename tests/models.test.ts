@@ -5,7 +5,6 @@ import {
   extractIncluded,
   extractList,
   extractSingle,
-  formatBundleSummary,
   formatMaterialSummary,
   formatProblemSummary,
   snakeToPascal,
@@ -217,21 +216,4 @@ describe("formatSummaries", () => {
     expect(result).toBe("- [1] Q1 (type: quiz)");
   });
 
-  it("bundle published", () => {
-    const result = formatBundleSummary({
-      id: "1",
-      title: "S1",
-      is_published: true,
-    });
-    expect(result).toBe("- [1] S1 (게시됨)");
-  });
-
-  it("bundle unpublished", () => {
-    const result = formatBundleSummary({
-      id: "1",
-      title: "S1",
-      is_published: false,
-    });
-    expect(result).toBe("- [1] S1 (미게시)");
-  });
 });
