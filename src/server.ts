@@ -1,12 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerAllTools } from "./tools/register.js";
 
-export const server = new McpServer(
-  {
-    name: "Codle",
-    version: "1.0.0",
-  },
-  {
-    instructions: `Codle는 인터랙티브 학습 플랫폼입니다.
+const SERVER_INFO = {
+  name: "Codle",
+  version: "1.0.0",
+};
+
+const SERVER_OPTIONS = {
+  instructions: `Codle는 인터랙티브 학습 플랫폼입니다.
 이 MCP 서버는 Codle의 자료, 활동, 태그 데이터를 조회하고 관리할 수 있는 도구를 제공합니다.
 
 ## 용어 매핑 (서비스 용어 = 개발 용어)
@@ -57,5 +58,10 @@ export const server = new McpServer(
 
 - 활동 삭제 시 코스 흐름(transition) 체인이 끊어짐. 중간 활동 삭제 후 복구 불가.
   문제 발생 시 자료 전체를 새로 생성하는 것이 안전.`,
-  }
-);
+};
+
+export function createServer(): McpServer {
+  const server = new McpServer(SERVER_INFO, SERVER_OPTIONS);
+  registerAllTools(server);
+  return server;
+}
