@@ -17,3 +17,6 @@ dist/
 
 # Test
 coverage/
+
+# Stash (removed features pending reimplementation)
+_stash/

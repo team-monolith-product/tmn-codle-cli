@@ -25,7 +25,6 @@ export const server = new McpServer(
 | 스크래치 | ScratchActivity | scratch_activities |
 | PDF | PdfActivity | pdf_activities |
 | 문제 | Problem | problems |
-| 문제 세트 | ProblemCollection | problem_collections |
 | 태그 | Tag | tags |
 | 갈림길 | ActivityTransition (with level) | activity_transitions |
 | 코스 흐름 | ActivityTransition (linear) | activity_transitions |
@@ -49,17 +48,13 @@ export const server = new McpServer(
    - blocks는 필수 (content는 검색용 평문)
    - quiz 타입: blocks에 \`quiz\` 객체 포함 (quizType, answer, choices, commentary)
    - sheet 타입: blocks에 \`root\`만 포함
-6. **문제 연결**: manage_problem_collections(action="create")로 활동에 문제 연결
-   - QuizActivity, SheetActivity 등 문제 기반 활동에 필수
-7. **검증**: get_material_detail로 활동 목록, 유형, 분기, 문제 연결 확인
+6. **검증**: get_material_detail로 활동 목록, 유형, 분기 확인
    - type이 "미연결"로 표시되면 activitiable 생성이 실패한 것 → 활동 재생성 필요
 
 ## API 제약사항
 
 - **api/v1만 사용**: 이 MCP 서버는 \`/api/v1/*\` 엔드포인트만 사용합니다.
   \`/admin/v1/*\`은 관리자 전용이며 사용할 수 없습니다.
-- **ProblemCollection 직접 생성 불가**: \`POST /api/v1/problem_collections\`는 존재하지 않습니다.
-  ProblemCollection은 manage_problem_collections 도구가 내부적으로 처리합니다.
 - **activitiable 연결 확인**: Activity의 activitiable 연결 여부는 API 응답의 attributes가 아닌
   \`include=activitiable\` 파라미터를 사용한 relationships로만 확인 가능합니다.
   API 응답에서 \`relationships.activitiable: {}\`는 "데이터 미포함"이지 "연결 안 됨"이 아닙니다.

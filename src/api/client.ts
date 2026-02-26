@@ -332,20 +332,6 @@ export class CodleClient {
   }
 
   // --- Problem Collections ---
-  async listProblemCollections(
-    params?: Record<string, string | number | boolean>
-  ): Promise<Record<string, unknown>> {
-    return this.request("GET", "/api/v1/problem_collections", { params });
-  }
-
-  async doManyProblemCollectionsProblems(
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("POST", "/api/v1/problem_collections_problems/do_many", {
-      json: data,
-    });
-  }
-
   // --- Quiz Activities ---
   async createQuizActivity(
     data: Record<string, unknown>
