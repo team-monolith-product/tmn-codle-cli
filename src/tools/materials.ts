@@ -45,9 +45,6 @@ export function registerMaterialTools(server: McpServer): void {
       if (is_public !== undefined) {
         params["filter[is_public]"] = String(is_public);
       }
-      if (is_public !== true && client.userId) {
-        params["filter[user_id]"] = client.userId;
-      }
       if (tag_ids?.length) {
         params["filter[tag_ids]"] = tag_ids.join(",");
       }

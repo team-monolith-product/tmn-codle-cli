@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { server } from "./server.js";
 import { registerAllTools } from "./tools/register.js";
+import { requestContext } from "./context.js";
 
 registerAllTools(server);
 
@@ -23,7 +24,14 @@ const httpServer = createServer(async (req, res) => {
   }
 
   if (url === "/mcp") {
-    await transport.handleRequest(req, res);
+    const authHeader = req.headers.authorization ?? "";
+    const accessToken = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : "";
+
+    await requestContext.run({ accessToken }, () =>
+      transport.handleRequest(req, res)
+    );
     return;
   }
 

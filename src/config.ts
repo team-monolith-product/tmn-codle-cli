@@ -6,7 +6,6 @@ export const config = {
     ""
   ),
   authUrl: (process.env.CODLE_AUTH_URL || "").replace(/\/$/, ""),
-  accessToken: process.env.CODLE_ACCESS_TOKEN || "",
   port: parseInt(process.env.CODLE_PORT || "3000", 10),
   logLevel: process.env.CODLE_LOG_LEVEL || "INFO",
 };

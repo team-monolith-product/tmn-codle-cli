@@ -1,48 +1,35 @@
 import { config } from "../config.js";
+import { getAccessToken } from "../context.js";
 import { logger } from "../logger.js";
 import { CodleAPIError, extractErrorDetail } from "./errors.js";
 
 export class CodleClient {
   private baseUrl: string;
-  private accessToken: string;
-  userId = "";
   private authUrl: string;
-  private userIdFetched = false;
 
   constructor() {
     this.baseUrl = config.apiUrl;
     this.authUrl = config.authUrl;
-    this.accessToken = config.accessToken;
   }
 
-  private async fetchUserId(): Promise<void> {
-    if (!this.accessToken || !this.authUrl) return;
-    const response = await fetch(`${this.authUrl}/api/v1/me`, {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    });
-    if (response.ok) {
-      const data = (await response.json()) as Record<string, unknown>;
-      this.userId = String(data.id || "");
-    }
+  private getToken(): string {
+    return getAccessToken();
   }
 
   private authHeaders(): Record<string, string> {
-    if (this.accessToken) {
-      return { Authorization: `Bearer ${this.accessToken}` };
+    const token = this.getToken();
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
     }
     return {};
   }
 
   async ensureAuth(): Promise<void> {
-    if (!this.accessToken) {
+    if (!this.getToken()) {
       throw new CodleAPIError(
         401,
-        "CODLE_ACCESS_TOKEN이 설정되지 않았습니다. PAT를 환경변수에 설정하세요."
+        "Authorization 헤더에 Bearer 토큰이 필요합니다."
       );
-    }
-    if (!this.userIdFetched) {
-      this.userIdFetched = true;
-      await this.fetchUserId();
     }
   }
 
