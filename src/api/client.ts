@@ -220,24 +220,11 @@ export class CodleClient {
     return this.request("POST", `/api/v1/materials/${materialId}/duplicate`);
   }
 
-  async deleteMaterial(
-    materialId: string
-  ): Promise<Record<string, unknown>> {
-    return this.request("DELETE", `/api/v1/materials/${materialId}`);
-  }
-
   // --- Activities ---
   async createActivity(
     data: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     return this.request("POST", "/api/v1/activities", { json: data });
-  }
-
-  async getActivity(
-    activityId: string,
-    params?: Record<string, string | number | boolean>
-  ): Promise<Record<string, unknown>> {
-    return this.request("GET", `/api/v1/activities/${activityId}`, { params });
   }
 
   async updateActivity(
@@ -261,26 +248,11 @@ export class CodleClient {
     return this.request("POST", `/api/v1/activities/${activityId}/duplicate`);
   }
 
-  async doManyActivities(
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("POST", "/api/v1/activities/do_many", { json: data });
-  }
-
   // --- Activity Transitions ---
   async createActivityTransition(
     data: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     return this.request("POST", "/api/v1/activity_transitions", { json: data });
-  }
-
-  async deleteActivityTransition(
-    transitionId: string
-  ): Promise<Record<string, unknown>> {
-    return this.request(
-      "DELETE",
-      `/api/v1/activity_transitions/${transitionId}`
-    );
   }
 
   async doManyActivityTransitions(
@@ -298,21 +270,6 @@ export class CodleClient {
     return this.request("GET", "/api/v1/tags", { params });
   }
 
-  // --- Quiz Activities ---
-  async createQuizActivity(
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("POST", "/api/v1/quiz_activities", { json: data });
-  }
-
-  async updateQuizActivity(
-    activityId: string,
-    data: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/api/v1/quiz_activities/${activityId}`, {
-      json: data,
-    });
-  }
 }
 
 export const client = new CodleClient();
