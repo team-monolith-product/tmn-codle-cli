@@ -33,15 +33,11 @@ tmn-codle-mcp/
 │       ├── register.ts   # 모든 tool 일괄 등록
 │       ├── activities.ts
 │       ├── materials.ts
-│       ├── problems.ts
-│       ├── bundles.ts
 │       └── tags.ts
 ├── tests/
 │   ├── helpers.ts
 │   ├── activities.test.ts
 │   ├── materials.test.ts
-│   ├── problems.test.ts
-│   ├── bundles.test.ts
 │   ├── models.test.ts
 │   └── client.test.ts
 ├── package.json
@@ -79,8 +75,6 @@ Claude Desktop/Code
 |---|---|---|
 | `/api/v1/materials` | `authorize_user_token!` | O |
 | `/api/v1/activities` | `authorize_user_token!` | O |
-| `/api/v1/problems` | `authorize_user_token!` | O |
-| `/api/v1/material_bundles` | `authorize_user_token!` | O |
 | `/api/v1/tags` | 인증 없음 (public) | O |
 
 ### 토큰 특성
@@ -165,7 +159,7 @@ Claude Desktop은 `~/Library/Logs/Claude/` 하위에서 확인할 수 있다.
 - [ ] 문제 생성 시 test_case, problem_answer 포함 지원
 
 ### 테스트
-- [x] tool별 단위 테스트 (mock API) — 119개
+- [x] tool별 단위 테스트 (mock API) — 70개
 - [ ] dev 환경 실제 API 연동 테스트
 - [ ] Claude Desktop 연동 E2E 테스트
 
