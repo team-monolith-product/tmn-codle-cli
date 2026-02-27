@@ -1,32 +1,5 @@
 # Codle MCP 설치 가이드
 
-## 요구사항
-
-- Node.js 22+
-
-## 설치 & 빌드
-
-```bash
-npm install
-npm run build
-```
-
-## 환경변수
-
-`.env` 파일 또는 환경변수로 설정한다. `.env.example` 참고.
-
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `CODLE_API_URL` | `https://class.dev.codle.io` | Codle API 서버 URL |
-| `CODLE_PORT` | `3000` | MCP 서버 포트 |
-| `CODLE_LOG_LEVEL` | `INFO` | 로그 레벨 (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
-
-## 서버 실행
-
-```bash
-node dist/index.js
-```
-
 ## MCP 클라이언트 설정
 
 ### Claude Code
@@ -38,21 +11,20 @@ node dist/index.js
   "mcpServers": {
     "codle": {
       "type": "http",
-      "url": "http://localhost:3000/mcp"
+      "url": "https://mcp.codle.io/mcp",
+      "headers": {
+        "Authorization": "Bearer ${CODLE_TOKEN}"
+      }
     }
   }
 }
 ```
 
+`CODLE_TOKEN` 환경변수에 토큰을 설정한다. 토큰 발급은 인프라팀에 문의.
+
 ### Claude Desktop
 
 `~/Library/Application Support/Claude/claude_desktop_config.json`에 동일한 JSON을 추가한다.
-
-## 인증
-
-서버는 토큰을 환경변수로 보관하지 않는다. MCP 클라이언트가 HTTP 요청마다 `Authorization: Bearer <token>` 헤더로 전달한다.
-
-토큰 발급은 인프라팀에 문의.
 
 ## 사용 예시
 
@@ -67,5 +39,35 @@ node dist/index.js
 | 증상 | 원인 | 해결 |
 |------|------|------|
 | 401 Unauthorized | 토큰 누락/만료 | MCP 클라이언트의 Authorization 헤더 확인 |
-| Connection refused | API URL 오류 | `CODLE_API_URL` 확인 |
-| Cannot find module | 빌드 안 됨 | `npm run build` 실행 |
+| Connection refused | 서버 URL 오류 | `.mcp.json`의 URL 확인 |
+
+## 로컬 개발
+
+### 요구사항
+
+- Node.js 22+
+
+### 설치 & 빌드
+
+```bash
+npm install
+npm run build
+```
+
+### 환경변수
+
+`.env` 파일 또는 환경변수로 설정한다. `.env.example` 참고.
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `CODLE_API_URL` | `https://class.dev.codle.io` | Codle API 서버 URL |
+| `CODLE_PORT` | `3000` | MCP 서버 포트 |
+| `CODLE_LOG_LEVEL` | `INFO` | 로그 레벨 (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
+
+### 서버 실행
+
+```bash
+node dist/index.js
+```
+
+로컬에서 MCP 클라이언트를 연결하려면 URL을 `http://localhost:3000/mcp`로 설정한다.
