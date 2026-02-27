@@ -194,105 +194,122 @@ export function registerMaterialTools(server: McpServer): void {
   );
 
   server.tool(
-    "create_material",
-    "새 자료(Material)를 생성합니다.",
+    "manage_materials",
+    "자료(Material) CRUD.",
     {
-      name: z.string().describe("자료 이름 (필수, 최대 255자)"),
+      action: z
+        .string()
+        .describe('수행할 작업 ("create", "update", "duplicate")'),
+      material_id: z
+        .string()
+        .optional()
+        .describe("자료 ID (update, duplicate 시 필수)"),
+      name: z
+        .string()
+        .optional()
+        .describe("자료 이름 (create 시 필수, 최대 255자)"),
       is_public: z
         .boolean()
-        .default(false)
+        .optional()
         .describe("공개 여부 (비가역)"),
       tag_ids: z
         .array(z.string())
         .optional()
         .describe("태그 ID 목록"),
     },
-    async ({ name, is_public, tag_ids }) => {
-      const attrs: Record<string, unknown> = {
-        name,
-        is_public,
-      };
-      if (tag_ids?.length) attrs.tag_ids = tag_ids;
+    async ({ action, material_id, name, is_public, tag_ids }) => {
+      if (action === "create") {
+        if (!name) {
+          return {
+            content: [
+              { type: "text", text: "create 시 name은 필수입니다." },
+            ],
+          };
+        }
+        const attrs: Record<string, unknown> = {
+          name,
+          is_public: is_public ?? false,
+        };
+        if (tag_ids?.length) attrs.tag_ids = tag_ids;
 
-      const payload = buildJsonApiPayload("materials", attrs);
-      const response = await client.createMaterial(
-        payload as Record<string, unknown>
-      );
-      const mat = extractSingle(response);
-      return {
-        content: [
-          {
-            type: "text",
-            text: `자료 생성 완료: [${mat.id}] ${mat.name}`,
-          },
-        ],
-      };
-    }
-  );
-
-  server.tool(
-    "update_material",
-    "자료(Material)를 수정합니다. 전달한 필드만 변경됩니다.",
-    {
-      material_id: z.string().describe("수정할 자료의 ID"),
-      name: z.string().optional().describe("자료 이름"),
-      is_public: z
-        .boolean()
-        .optional()
-        .describe("공개 여부 (비가역)"),
-      tag_ids: z
-        .array(z.string())
-        .optional()
-        .describe("태그 ID 목록 (전체 교체)"),
-    },
-    async ({
-      material_id,
-      name,
-      is_public,
-      tag_ids,
-    }) => {
-      const attrs: Record<string, unknown> = {};
-      if (name !== undefined) attrs.name = name;
-      if (is_public !== undefined) attrs.is_public = is_public;
-      if (tag_ids !== undefined) attrs.tag_ids = tag_ids;
-
-      if (!Object.keys(attrs).length) {
+        const payload = buildJsonApiPayload("materials", attrs);
+        const response = await client.createMaterial(
+          payload as Record<string, unknown>
+        );
+        const mat = extractSingle(response);
         return {
-          content: [{ type: "text", text: "수정할 항목이 없습니다." }],
+          content: [
+            {
+              type: "text",
+              text: `자료 생성 완료: [${mat.id}] ${mat.name}`,
+            },
+          ],
         };
       }
 
-      const payload = buildJsonApiPayload("materials", attrs, material_id);
-      const response = await client.updateMaterial(
-        material_id,
-        payload as Record<string, unknown>
-      );
-      const mat = extractSingle(response);
-      return {
-        content: [
-          {
-            type: "text",
-            text: `자료 수정 완료: [${mat.id}] ${mat.name}`,
-          },
-        ],
-      };
-    }
-  );
+      if (action === "update") {
+        if (!material_id) {
+          return {
+            content: [
+              { type: "text", text: "update 시 material_id는 필수입니다." },
+            ],
+          };
+        }
+        const attrs: Record<string, unknown> = {};
+        if (name !== undefined) attrs.name = name;
+        if (is_public !== undefined) attrs.is_public = is_public;
+        if (tag_ids !== undefined) attrs.tag_ids = tag_ids;
 
-  server.tool(
-    "duplicate_material",
-    "자료(Material)를 복제합니다. 활동, 문제 등 모두 복사됩니다.",
-    {
-      material_id: z.string().describe("복제할 원본 자료의 ID"),
-    },
-    async ({ material_id }) => {
-      const response = await client.duplicateMaterial(material_id);
-      const mat = extractSingle(response);
+        if (!Object.keys(attrs).length) {
+          return {
+            content: [{ type: "text", text: "수정할 항목이 없습니다." }],
+          };
+        }
+
+        const payload = buildJsonApiPayload("materials", attrs, material_id);
+        const response = await client.updateMaterial(
+          material_id,
+          payload as Record<string, unknown>
+        );
+        const mat = extractSingle(response);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `자료 수정 완료: [${mat.id}] ${mat.name}`,
+            },
+          ],
+        };
+      }
+
+      if (action === "duplicate") {
+        if (!material_id) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "duplicate 시 material_id는 필수입니다.",
+              },
+            ],
+          };
+        }
+        const response = await client.duplicateMaterial(material_id);
+        const mat = extractSingle(response);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `자료 복제 완료: [${mat.id}] ${mat.name} (원본: ${material_id})`,
+            },
+          ],
+        };
+      }
+
       return {
         content: [
           {
             type: "text",
-            text: `자료 복제 완료: [${mat.id}] ${mat.name} (원본: ${material_id})`,
+            text: `유효하지 않은 action: ${action}. create, update, duplicate 중 하나를 사용하세요.`,
           },
         ],
       };

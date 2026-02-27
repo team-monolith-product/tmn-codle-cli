@@ -169,53 +169,80 @@ describe("get_material_detail", () => {
   });
 });
 
-describe("create_material", () => {
-  it("basic create", async () => {
+describe("manage_materials", () => {
+  it("create", async () => {
     mockClient.createMaterial.mockResolvedValue(
       makeJsonApiResponse("material", "1", { name: "새 자료" })
     );
 
-    const result = await toolHandlers.create_material({
+    const result = await toolHandlers.manage_materials({
+      action: "create",
       name: "새 자료",
-      is_public: false,
     });
     expect(getText(result)).toContain("자료 생성 완료");
     expect(getText(result)).toContain("새 자료");
   });
 
-});
+  it("create without name", async () => {
+    const result = await toolHandlers.manage_materials({
+      action: "create",
+    });
+    expect(getText(result)).toContain("name은 필수");
+  });
 
-describe("update_material", () => {
-  it("update name", async () => {
+  it("update", async () => {
     mockClient.updateMaterial.mockResolvedValue(
       makeJsonApiResponse("material", "1", { name: "수정됨" })
     );
 
-    const result = await toolHandlers.update_material({
+    const result = await toolHandlers.manage_materials({
+      action: "update",
       material_id: "1",
       name: "수정됨",
     });
     expect(getText(result)).toContain("자료 수정 완료");
   });
 
-  it("no changes", async () => {
-    const result = await toolHandlers.update_material({
+  it("update without material_id", async () => {
+    const result = await toolHandlers.manage_materials({
+      action: "update",
+      name: "수정됨",
+    });
+    expect(getText(result)).toContain("material_id는 필수");
+  });
+
+  it("update no changes", async () => {
+    const result = await toolHandlers.manage_materials({
+      action: "update",
       material_id: "1",
     });
     expect(getText(result)).toContain("수정할 항목이 없습니다");
   });
-});
 
-describe("duplicate_material", () => {
-  it("basic duplicate", async () => {
+  it("duplicate", async () => {
     mockClient.duplicateMaterial.mockResolvedValue(
       makeJsonApiResponse("material", "2", { name: "복제됨" })
     );
 
-    const result = await toolHandlers.duplicate_material({
+    const result = await toolHandlers.manage_materials({
+      action: "duplicate",
       material_id: "1",
     });
     expect(getText(result)).toContain("자료 복제 완료");
     expect(getText(result)).toContain("원본: 1");
+  });
+
+  it("duplicate without material_id", async () => {
+    const result = await toolHandlers.manage_materials({
+      action: "duplicate",
+    });
+    expect(getText(result)).toContain("material_id는 필수");
+  });
+
+  it("invalid action", async () => {
+    const result = await toolHandlers.manage_materials({
+      action: "delete",
+    });
+    expect(getText(result)).toContain("유효하지 않은 action");
   });
 });

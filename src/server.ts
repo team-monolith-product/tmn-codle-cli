@@ -24,7 +24,7 @@ const SERVER_OPTIONS = {
 ## 자료 생성 워크플로우
 
 1. manage_tags로 태그 ID 조회
-2. create_material
+2. manage_materials(create)
 3. manage_activities(create)로 활동 생성 (순서 무관, 갈림길 포함)
 4. set_activity_flow로 코스 흐름 설정
 5. set_activity_branch로 갈림길 설정 (필요 시)
