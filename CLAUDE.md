@@ -1,13 +1,5 @@
 # Codle MCP Server
 
-> 기술 스택, 구조, 인증: [README.md](README.md) 참고
-
-## 명령어
-
-- `npm run build` — TypeScript 빌드 (dist/)
-- `npm test` — 전체 테스트
-- `npm run typecheck` — 타입 체크만
-
 ## 설계 원칙
 
 - **인터페이스 우선**: MCP 도구의 이름, 파라미터, 반환값 설계를 구현보다 먼저 확정한다.
