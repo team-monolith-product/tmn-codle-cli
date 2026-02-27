@@ -3,7 +3,6 @@ import type { CodleClient } from "../src/api/client.js";
 
 export function createMockClient(): CodleClient {
   return {
-    userId: "test-user-123",
     ensureAuth: vi.fn(),
     request: vi.fn(),
     listMaterials: vi.fn(),
@@ -11,32 +10,13 @@ export function createMockClient(): CodleClient {
     createMaterial: vi.fn(),
     updateMaterial: vi.fn(),
     duplicateMaterial: vi.fn(),
-    deleteMaterial: vi.fn(),
-    listProblems: vi.fn(),
-    getProblem: vi.fn(),
-    createProblem: vi.fn(),
-    updateProblem: vi.fn(),
-    duplicateProblem: vi.fn(),
     createActivity: vi.fn(),
-    getActivity: vi.fn(),
     updateActivity: vi.fn(),
     deleteActivity: vi.fn(),
     duplicateActivity: vi.fn(),
-    doManyActivities: vi.fn(),
-    listMaterialBundles: vi.fn(),
-    getMaterialBundle: vi.fn(),
-    createMaterialBundle: vi.fn(),
-    updateMaterialBundle: vi.fn(),
-    deleteMaterialBundle: vi.fn(),
-    duplicateMaterialBundle: vi.fn(),
     createActivityTransition: vi.fn(),
-    deleteActivityTransition: vi.fn(),
     doManyActivityTransitions: vi.fn(),
     listTags: vi.fn(),
-    listProblemCollections: vi.fn(),
-    doManyProblemCollectionsProblems: vi.fn(),
-    createQuizActivity: vi.fn(),
-    updateQuizActivity: vi.fn(),
   } as unknown as CodleClient;
 }
 
