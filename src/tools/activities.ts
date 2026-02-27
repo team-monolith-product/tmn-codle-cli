@@ -103,38 +103,11 @@ export function registerActivityTools(server: McpServer): void {
     "manage_activities",
     `자료(Material) 내 활동(Activity)을 추가, 수정, 삭제합니다.
 
-활동은 자료를 구성하는 학습 단위입니다. 순서대로 생성하면 자동으로 선형 연결됩니다.
-
-## 활동 유형 매핑
-입력 스크립트의 키워드 → activity_type:
-- 교안, 교안 실습 → HtmlActivity
-- 퀴즈 → QuizActivity
-- 보드 → BoardActivity
-- 활동지 → SheetActivity
-- 코딩, Python → StudioActivity
-- 영상 → VideoActivity
-- 엔트리 → EntryActivity
-- 스크래치 → ScratchActivity
-- PDF → PdfActivity
-
-## 자동 연결
-활동을 순서대로 create하면 이전 활동 → 새 활동 transition이 자동 생성됩니다.
-반드시 코스 흐름 순서대로 생성하세요.
-
-## depth (들여쓰기, 1-indexed)
-- 1: 메인 활동 (코스 흐름에서 독립 노드)
-- 2: 하위 활동 (직전 depth=1 활동의 하위로 들여쓰기 표시)
-- 3: 하위의 하위
-※ 내부적으로 Rails API에 보낼 때 -1 변환됨 (1→0, 2→1)
+순서대로 create하면 이전 활동 → 새 활동 transition이 자동 생성됩니다.
 
 ## 갈림길(branch)
 branch_from을 지정하면 활동만 생성하고 transition은 생성하지 않습니다.
 모든 갈림길 활동 생성 후 set_activity_branch로 분기를 일괄 설정하세요.
-예) 활동 "48330"에서 3갈래 분기:
-  create(..., branch_from="48330")  # 기본(mid) 활동
-  create(..., branch_from="48330")  # 보완(low) 활동
-  create(..., branch_from="48330")  # 정복(high) 활동
-  set_activity_branch(branch_from="48330", mid_activity_id="...", low_activity_id="...", high_activity_id="...")
 
 ## 참고
 QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를 연결해야 합니다.`,
