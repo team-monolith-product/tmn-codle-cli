@@ -1,43 +1,12 @@
-# Codle MCP Server (TypeScript)
+# Codle MCP Server
 
-## 기술 스택
-
-- Runtime: Node.js 22+
-- MCP SDK: `@modelcontextprotocol/sdk`
-- HTTP: native `fetch`
-- Validation: `zod`
-- Test: `vitest`
-- Build: `tsc` (ESM, Node16 module)
+> 기술 스택, 구조, 인증: [README.md](README.md) 참고
 
 ## 명령어
 
 - `npm run build` — TypeScript 빌드 (dist/)
 - `npm test` — 전체 테스트
 - `npm run typecheck` — 타입 체크만
-
-## 구조
-
-```
-src/
-├── index.ts          # Entry point (HTTP transport)
-├── server.ts         # McpServer 인스턴스 + instructions
-├── config.ts         # 환경변수 (dotenv)
-├── logger.ts         # stderr 로깅
-├── api/
-│   ├── client.ts     # CodleClient (fetch, per-request 인증)
-│   ├── models.ts     # JSON:API 유틸
-│   └── errors.ts     # CodleAPIError
-└── tools/
-    ├── register.ts   # 모든 tool 일괄 등록
-    ├── activities.ts
-    ├── materials.ts
-    └── tags.ts
-```
-
-## 인증
-
-Per-request `Authorization: Bearer` 헤더 방식. MCP 클라이언트가 HTTP 요청 시 토큰을 전달한다.
-서버 자체는 토큰을 환경변수로 보관하지 않는다.
 
 ## API 제약사항
 
