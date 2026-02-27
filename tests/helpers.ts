@@ -1,25 +1,3 @@
-import { vi } from "vitest";
-import type { CodleClient } from "../src/api/client.js";
-
-export function createMockClient(): CodleClient {
-  return {
-    ensureAuth: vi.fn(),
-    request: vi.fn(),
-    listMaterials: vi.fn(),
-    getMaterial: vi.fn(),
-    createMaterial: vi.fn(),
-    updateMaterial: vi.fn(),
-    duplicateMaterial: vi.fn(),
-    createActivity: vi.fn(),
-    updateActivity: vi.fn(),
-    deleteActivity: vi.fn(),
-    duplicateActivity: vi.fn(),
-    createActivityTransition: vi.fn(),
-    doManyActivityTransitions: vi.fn(),
-    listTags: vi.fn(),
-  } as unknown as CodleClient;
-}
-
 export function makeJsonApiResponse(
   resourceType: string,
   resourceId: string,
