@@ -38,8 +38,13 @@ export function registerMaterialTools(server: McpServer): void {
         "page[number]": page_number,
       };
       if (query) params["filter[query]"] = query;
-      if (is_public !== undefined) {
-        params["filter[is_public]"] = String(is_public);
+      if (is_public) {
+        params["filter[is_public]"] = "true";
+      } else {
+        const me = await client.getMe();
+        const data = (me.data as Record<string, unknown>) ?? me;
+        const userId = String(data.id);
+        params["filter[user_id]"] = userId;
       }
       if (tag_ids?.length) {
         params["filter[tag_ids]"] = tag_ids.join(",");

@@ -5,6 +5,7 @@ vi.mock("../src/api/client.js", () => {
   const mockClient = {
     userId: "test-user-123",
     ensureAuth: vi.fn(),
+    getMe: vi.fn(),
     listMaterials: vi.fn(),
     getMaterial: vi.fn(),
     createMaterial: vi.fn(),
@@ -36,10 +37,13 @@ function getText(result: { content: Array<{ type: string; text: string }> }): st
 beforeEach(() => {
   vi.clearAllMocks();
   (client as Record<string, unknown>).userId = "test-user-123";
+  mockClient.getMe.mockResolvedValue({
+    data: { id: "test-user-123", type: "user", attributes: {} },
+  });
 });
 
 describe("search_materials", () => {
-  it("basic search", async () => {
+  it("basic search (my materials)", async () => {
     mockClient.listMaterials.mockResolvedValue(
       makeJsonApiListResponse("material", [
         { id: "1", name: "테스트 자료", is_public: false },
@@ -53,8 +57,11 @@ describe("search_materials", () => {
     });
     expect(getText(result)).toContain("테스트 자료");
 
+    expect(mockClient.getMe).toHaveBeenCalled();
     const callParams = mockClient.listMaterials.mock.calls[0][0];
     expect(callParams["filter[query]"]).toBe("테스트");
+    expect(callParams["filter[user_id]"]).toBe("test-user-123");
+    expect(callParams["filter[is_public]"]).toBeUndefined();
   });
 
   it("public search no user_id", async () => {
@@ -69,6 +76,8 @@ describe("search_materials", () => {
       page_size: 20,
       page_number: 1,
     });
+
+    expect(mockClient.getMe).not.toHaveBeenCalled();
     const callParams = mockClient.listMaterials.mock.calls[0][0];
     expect(callParams["filter[is_public]"]).toBe("true");
     expect(callParams["filter[user_id]"]).toBeUndefined();
@@ -92,6 +101,26 @@ describe("search_materials", () => {
     });
     const callParams = mockClient.listMaterials.mock.calls[0][0];
     expect(callParams["filter[tag_ids]"]).toBe("10,20");
+  });
+
+  it("is_public=false calls getMe and sends user_id", async () => {
+    mockClient.listMaterials.mockResolvedValue(
+      makeJsonApiListResponse("material", [
+        { id: "3", name: "내 자료", is_public: false },
+      ])
+    );
+
+    const result = await toolHandlers.search_materials({
+      is_public: false,
+      page_size: 20,
+      page_number: 1,
+    });
+    expect(getText(result)).toContain("내 자료");
+
+    expect(mockClient.getMe).toHaveBeenCalledOnce();
+    const callParams = mockClient.listMaterials.mock.calls[0][0];
+    expect(callParams["filter[user_id]"]).toBe("test-user-123");
+    expect(callParams["filter[is_public]"]).toBeUndefined();
   });
 });
 

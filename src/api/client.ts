@@ -115,6 +115,11 @@ export class CodleClient {
     return (await response.json()) as Record<string, unknown>;
   }
 
+  // --- Me ---
+  async getMe(): Promise<Record<string, unknown>> {
+    return this.request("GET", "/api/v1/me");
+  }
+
   // --- Materials ---
   async listMaterials(
     params?: Record<string, string | number | boolean>
