@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CodleAPIError } from "../src/api/errors.js";
-import {
-  createMockClient,
-  makeJsonApiResponse,
-} from "./helpers.js";
+import { makeJsonApiResponse } from "./helpers.js";
 
 // We need to mock the client module before importing tools
 vi.mock("../src/api/client.js", () => {
