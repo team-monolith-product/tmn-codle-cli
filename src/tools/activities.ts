@@ -42,10 +42,8 @@ export function registerActivityTools(server: McpServer): void {
     `활동(Activity) CRUD. QuizActivity, SheetActivity는 생성 후 관리자 화면에서 문제 연결 필요.`,
     {
       action: z
-        .string()
-        .describe(
-          '수행할 작업 ("create", "update", "delete", "duplicate")'
-        ),
+        .enum(["create", "update", "delete", "duplicate"])
+        .describe("수행할 작업"),
       material_id: z
         .string()
         .optional()

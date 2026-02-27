@@ -190,9 +190,7 @@ export function registerMaterialTools(server: McpServer): void {
     "manage_materials",
     "자료(Material) CRUD.",
     {
-      action: z
-        .string()
-        .describe('수행할 작업 ("create", "update", "duplicate")'),
+      action: z.enum(["create", "update", "duplicate"]).describe("수행할 작업"),
       material_id: z
         .string()
         .optional()
