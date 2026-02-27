@@ -36,78 +36,12 @@ export function pascalToSnake(name: string): string {
   return result;
 }
 
-async function createTransition(
-  beforeId: string,
-  afterId: string,
-  level?: string
-): Promise<void> {
-  const attrs: Record<string, unknown> = {
-    before_activity_id: beforeId,
-    after_activity_id: afterId,
-  };
-  if (level) attrs.level = level;
-  const payload = {
-    data: { type: "activity_transition", attributes: attrs },
-  };
-  await client.createActivityTransition(payload);
-}
-
-async function getMaterialTransitions(
-  materialId: string,
-  excludeId: string
-): Promise<{
-  transitions: Record<string, unknown>[];
-  existingIds: string[];
-}> {
-  const matResp = await client.getMaterial(materialId, {
-    include: "activities,activity_transitions",
-  });
-  const included = (
-    (matResp as Record<string, unknown>).included as Array<
-      Record<string, unknown>
-    >
-  ) || [];
-  const transitions = included.filter(
-    (i) => i.type === "activity_transition"
-  );
-  const existingIds = included
-    .filter((i) => i.type === "activity" && i.id !== excludeId)
-    .map((i) => String(i.id));
-  return { transitions, existingIds };
-}
-
-export async function findTailActivity(
-  materialId: string,
-  excludeId: string
-): Promise<string | null> {
-  const { transitions, existingIds } = await getMaterialTransitions(
-    materialId,
-    excludeId
-  );
-
-  if (!existingIds.length) return null;
-
-  const beforeIds = new Set(
-    transitions.map((t) =>
-      String(
-        ((t.attributes as Record<string, unknown>) || {}).before_activity_id
-      )
-    )
-  );
-  const tails = existingIds.filter((aid) => !beforeIds.has(aid));
-  return tails.length === 1 ? tails[0] : null;
-}
-
 export function registerActivityTools(server: McpServer): void {
   server.tool(
     "manage_activities",
     `자료(Material) 내 활동(Activity)을 추가, 수정, 삭제합니다.
 
-순서대로 create하면 이전 활동 → 새 활동 transition이 자동 생성됩니다.
-
-## 갈림길(branch)
-branch_from을 지정하면 활동만 생성하고 transition은 생성하지 않습니다.
-모든 갈림길 활동 생성 후 set_activity_branch로 분기를 일괄 설정하세요.
+활동 생성 후 set_activity_flow로 코스 흐름(선형 연결)을, set_activity_branch로 갈림길을 설정하세요.
 
 ## 참고
 QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를 연결해야 합니다.`,
@@ -143,12 +77,6 @@ QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를
         .array(z.string())
         .optional()
         .describe("연결할 태그 ID 목록"),
-      branch_from: z
-        .string()
-        .optional()
-        .describe(
-          "갈림길 분기점 활동 ID. 지정 시 auto-chain 없이 활동만 생성됩니다. 생성 후 set_activity_branch로 분기를 설정하세요."
-        ),
     },
     async ({
       action,
@@ -158,7 +86,6 @@ QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를
       activity_type,
       depth,
       tag_ids,
-      branch_from,
     }) => {
       if (action === "create") {
         if (!material_id || !name || !activity_type) {
@@ -238,41 +165,12 @@ QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를
           payload as Record<string, unknown>
         );
         const activity = extractSingle(response);
-        const newId = String(activity.id);
-
-        // 3단계: transition 생성
-        let chainMsg = "";
-        if (branch_from) {
-          chainMsg = `. set_activity_branch로 갈림길 설정 필요 (branch_from=${branch_from})`;
-        } else {
-          try {
-            const tail = await findTailActivity(material_id, newId);
-            if (tail) {
-              await createTransition(tail, newId);
-              chainMsg = `, ${tail} → ${newId} 연결됨`;
-            } else {
-              chainMsg = ` (주의: tail 활동을 특정할 수 없어 자동 연결 생략됨. 분기가 있다면 branch_from을 사용하세요)`;
-            }
-          } catch (e) {
-            if (e instanceof CodleAPIError) {
-              return {
-                content: [
-                  {
-                    type: "text",
-                    text: `transition 생성 실패: ${e.detail} (활동 [${newId}]은 생성됨)`,
-                  },
-                ],
-              };
-            }
-            throw e;
-          }
-        }
 
         return {
           content: [
             {
               type: "text",
-              text: `활동 생성 완료: [${newId}] ${activity.name} (type: ${activity_type}${chainMsg})`,
+              text: `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${activity_type})`,
             },
           ],
         };
@@ -383,6 +281,93 @@ QuizActivity, SheetActivity는 생성 후 Codle 관리자 화면에서 문제를
           {
             type: "text",
             text: `유효하지 않은 action: ${action}. create, update, delete, duplicate 중 하나를 사용하세요.`,
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    "set_activity_flow",
+    `코스 흐름(선형 연결)을 설정합니다.
+활동 ID 배열을 순서대로 전달하면 연속된 활동 간 transition을 생성합니다.
+기존 선형 transition을 제거하고 새로 설정합니다 (갈림길 transition은 유지).`,
+    {
+      material_id: z.string().describe("자료 ID"),
+      activity_ids: z
+        .array(z.string())
+        .min(2)
+        .describe(
+          '활동 ID 배열 (코스 흐름 순서). 예: ["123", "41", "151"]'
+        ),
+    },
+    async ({ material_id, activity_ids }) => {
+      // 1단계: 기존 transition 조회
+      const matResp = await client.getMaterial(material_id, {
+        include: "activity_transitions",
+      });
+      const included =
+        ((matResp as Record<string, unknown>).included as Array<
+          Record<string, unknown>
+        >) || [];
+      const existingTransitions = included.filter(
+        (i) => i.type === "activity_transition"
+      );
+
+      // 2단계: level 없는 transition → 선형 → 삭제 대상
+      const dataToDestroy: { id: string }[] = [];
+      for (const t of existingTransitions) {
+        const attrs =
+          (t.attributes as Record<string, unknown>) || {};
+        if (!attrs.level) {
+          dataToDestroy.push({ id: String(t.id) });
+        }
+      }
+
+      // 3단계: 연속 쌍으로 생성 목록 구성
+      const dataToCreate: Record<string, unknown>[] = [];
+      for (let i = 0; i < activity_ids.length - 1; i++) {
+        dataToCreate.push({
+          attributes: {
+            before_activity_id: activity_ids[i],
+            after_activity_id: activity_ids[i + 1],
+          },
+        });
+      }
+
+      // 4단계: 원자적 교체
+      const payload: Record<string, unknown> = {
+        data_to_create: dataToCreate,
+      };
+      if (dataToDestroy.length) {
+        payload.data_to_destroy = dataToDestroy;
+      }
+
+      try {
+        await client.doManyActivityTransitions(payload);
+      } catch (e) {
+        if (e instanceof CodleAPIError) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `코스 흐름 설정 실패: ${e.detail}`,
+              },
+            ],
+          };
+        }
+        throw e;
+      }
+
+      const chain = activity_ids.join(" → ");
+      const destroyedMsg = dataToDestroy.length
+        ? `, 기존 선형 transition ${dataToDestroy.length}개 제거`
+        : "";
+      return {
+        content: [
+          {
+            type: "text",
+            text: `코스 흐름 설정 완료: ${chain}${destroyedMsg}`,
           },
         ],
       };

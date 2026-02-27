@@ -24,9 +24,7 @@ vi.mock("../src/api/client.js", () => {
 
 // Import after mocking
 const { client } = await import("../src/api/client.js");
-const { pascalToSnake, findTailActivity } = await import(
-  "../src/tools/activities.js"
-);
+const { pascalToSnake } = await import("../src/tools/activities.js");
 
 // We'll test the tool handlers directly via a helper
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -72,96 +70,6 @@ describe("pascalToSnake", () => {
   });
 });
 
-describe("findTailActivity", () => {
-  it("empty material → null", async () => {
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [],
-    });
-    const result = await findTailActivity("1", "new-1");
-    expect(result).toBeNull();
-  });
-
-  it("linear chain → last is tail", async () => {
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [
-        { id: "act-1", type: "activity", attributes: {} },
-        { id: "act-2", type: "activity", attributes: {} },
-        { id: "act-3", type: "activity", attributes: {} },
-        {
-          id: "t-1",
-          type: "activity_transition",
-          attributes: {
-            before_activity_id: "act-1",
-            after_activity_id: "act-2",
-          },
-        },
-        {
-          id: "t-2",
-          type: "activity_transition",
-          attributes: {
-            before_activity_id: "act-2",
-            after_activity_id: "act-3",
-          },
-        },
-      ],
-    });
-    const result = await findTailActivity("1", "new-1");
-    expect(result).toBe("act-3");
-  });
-
-  it("branch multiple tails → null", async () => {
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [
-        { id: "act-1", type: "activity", attributes: {} },
-        { id: "act-2", type: "activity", attributes: {} },
-        { id: "act-3", type: "activity", attributes: {} },
-        {
-          id: "t-1",
-          type: "activity_transition",
-          attributes: {
-            before_activity_id: "act-1",
-            after_activity_id: "act-2",
-          },
-        },
-        {
-          id: "t-2",
-          type: "activity_transition",
-          attributes: {
-            before_activity_id: "act-1",
-            after_activity_id: "act-3",
-          },
-        },
-      ],
-    });
-    const result = await findTailActivity("1", "new-1");
-    expect(result).toBeNull();
-  });
-
-  it("single activity no transitions → that activity is tail", async () => {
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [{ id: "act-1", type: "activity", attributes: {} }],
-    });
-    const result = await findTailActivity("1", "new-1");
-    expect(result).toBe("act-1");
-  });
-
-  it("exclude_id is excluded", async () => {
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [
-        { id: "act-1", type: "activity", attributes: {} },
-        { id: "new-1", type: "activity", attributes: {} },
-      ],
-    });
-    const result = await findTailActivity("1", "new-1");
-    expect(result).toBe("act-1");
-  });
-});
-
 describe("manage_activities create", () => {
   it("missing required params", async () => {
     const result = await toolHandlers.manage_activities({
@@ -193,10 +101,6 @@ describe("manage_activities create", () => {
         material_id: "1",
       })
     );
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [],
-    });
 
     const result = await toolHandlers.manage_activities({
       action: "create",
@@ -214,6 +118,8 @@ describe("manage_activities create", () => {
     const callArgs = mockClient.createActivity.mock.calls[0][0];
     expect(callArgs.data.attributes.activitiable_type).toBe("QuizActivity");
     expect(callArgs.data.attributes.activitiable_id).toBe("99");
+    // No auto-chain: getMaterial should not be called
+    expect(mockClient.getMaterial).not.toHaveBeenCalled();
   });
 
   it("depth 1-indexed to 0-indexed conversion", async () => {
@@ -223,10 +129,6 @@ describe("manage_activities create", () => {
     mockClient.createActivity.mockResolvedValue(
       makeJsonApiResponse("activity", "100", { name: "깊은활동", depth: 1 })
     );
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [],
-    });
 
     await toolHandlers.manage_activities({
       action: "create",
@@ -248,10 +150,6 @@ describe("manage_activities create", () => {
     mockClient.createActivity.mockResolvedValue(
       makeJsonApiResponse("activity", "100", { name: "기본활동", depth: 0 })
     );
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [],
-    });
 
     await toolHandlers.manage_activities({
       action: "create",
@@ -296,56 +194,6 @@ describe("manage_activities create", () => {
     expect(getText(result)).toContain("Validation failed");
   });
 
-  it("branch_from skips transition", async () => {
-    mockClient.request.mockResolvedValue(
-      makeJsonApiResponse("quiz_activity", "99")
-    );
-    mockClient.createActivity.mockResolvedValue(
-      makeJsonApiResponse("activity", "100", {
-        name: "분기활동",
-        depth: 0,
-        material_id: "1",
-      })
-    );
-
-    const result = await toolHandlers.manage_activities({
-      action: "create",
-      material_id: "1",
-      name: "분기활동",
-      activity_type: "QuizActivity",
-      depth: 0,
-      branch_from: "50",
-    });
-    expect(getText(result)).toContain("set_activity_branch");
-    expect(mockClient.getMaterial).not.toHaveBeenCalled();
-  });
-
-  it("auto chain to tail", async () => {
-    mockClient.request.mockResolvedValue(
-      makeJsonApiResponse("quiz_activity", "99")
-    );
-    mockClient.createActivity.mockResolvedValue(
-      makeJsonApiResponse("activity", "200", {
-        name: "두번째",
-        depth: 0,
-        material_id: "1",
-      })
-    );
-    mockClient.getMaterial.mockResolvedValue({
-      data: { id: "1", type: "material", attributes: {} },
-      included: [{ id: "act-1", type: "activity", attributes: {} }],
-    });
-
-    const result = await toolHandlers.manage_activities({
-      action: "create",
-      material_id: "1",
-      name: "두번째",
-      activity_type: "QuizActivity",
-      depth: 0,
-    });
-    expect(getText(result)).toContain("act-1 → 200 연결됨");
-    expect(mockClient.createActivityTransition).toHaveBeenCalledOnce();
-  });
 });
 
 describe("manage_activities update", () => {
@@ -533,5 +381,140 @@ describe("set_activity_branch", () => {
       low_activity_id: "52",
     });
     expect(getText(result)).toContain("갈림길 설정 실패");
+  });
+});
+
+describe("set_activity_flow", () => {
+  it("two activities linked", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [],
+    });
+    mockClient.doManyActivityTransitions.mockResolvedValue({});
+
+    const result = await toolHandlers.set_activity_flow({
+      material_id: "1",
+      activity_ids: ["10", "20"],
+    });
+    expect(getText(result)).toContain("코스 흐름 설정 완료");
+    expect(getText(result)).toContain("10 → 20");
+
+    const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
+    expect(callArgs.data_to_create).toHaveLength(1);
+    expect(callArgs.data_to_create[0].attributes).toEqual({
+      before_activity_id: "10",
+      after_activity_id: "20",
+    });
+    expect(callArgs.data_to_destroy).toBeUndefined();
+  });
+
+  it("three or more activities linked", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [],
+    });
+    mockClient.doManyActivityTransitions.mockResolvedValue({});
+
+    const result = await toolHandlers.set_activity_flow({
+      material_id: "1",
+      activity_ids: ["10", "20", "30"],
+    });
+    expect(getText(result)).toContain("10 → 20 → 30");
+
+    const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
+    expect(callArgs.data_to_create).toHaveLength(2);
+    expect(callArgs.data_to_create[0].attributes.before_activity_id).toBe("10");
+    expect(callArgs.data_to_create[0].attributes.after_activity_id).toBe("20");
+    expect(callArgs.data_to_create[1].attributes.before_activity_id).toBe("20");
+    expect(callArgs.data_to_create[1].attributes.after_activity_id).toBe("30");
+  });
+
+  it("replaces existing linear transitions", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [
+        {
+          id: "old-t-1",
+          type: "activity_transition",
+          attributes: {
+            before_activity_id: "10",
+            after_activity_id: "20",
+          },
+        },
+        {
+          id: "old-t-2",
+          type: "activity_transition",
+          attributes: {
+            before_activity_id: "20",
+            after_activity_id: "30",
+          },
+        },
+      ],
+    });
+    mockClient.doManyActivityTransitions.mockResolvedValue({});
+
+    const result = await toolHandlers.set_activity_flow({
+      material_id: "1",
+      activity_ids: ["10", "30", "20"],
+    });
+    expect(getText(result)).toContain("기존 선형 transition 2개 제거");
+
+    const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
+    expect(callArgs.data_to_destroy).toEqual([
+      { id: "old-t-1" },
+      { id: "old-t-2" },
+    ]);
+    expect(callArgs.data_to_create).toHaveLength(2);
+  });
+
+  it("preserves branch transitions (with level)", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [
+        {
+          id: "linear-t",
+          type: "activity_transition",
+          attributes: {
+            before_activity_id: "10",
+            after_activity_id: "20",
+          },
+        },
+        {
+          id: "branch-t",
+          type: "activity_transition",
+          attributes: {
+            before_activity_id: "10",
+            after_activity_id: "50",
+            level: "mid",
+          },
+        },
+      ],
+    });
+    mockClient.doManyActivityTransitions.mockResolvedValue({});
+
+    await toolHandlers.set_activity_flow({
+      material_id: "1",
+      activity_ids: ["10", "20"],
+    });
+
+    const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
+    // Only the linear transition should be destroyed
+    expect(callArgs.data_to_destroy).toEqual([{ id: "linear-t" }]);
+  });
+
+  it("API error", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [],
+    });
+    mockClient.doManyActivityTransitions.mockRejectedValue(
+      new CodleAPIError(422, "Invalid transition")
+    );
+
+    const result = await toolHandlers.set_activity_flow({
+      material_id: "1",
+      activity_ids: ["10", "20"],
+    });
+    expect(getText(result)).toContain("코스 흐름 설정 실패");
   });
 });

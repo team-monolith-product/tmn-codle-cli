@@ -43,13 +43,12 @@ const SERVER_OPTIONS = {
 
 1. **태그 확인**: manage_tags로 필요한 태그 ID 조회
 2. **자료 생성**: create_material
-3. **활동 순차 생성**: manage_activities(action="create")를 코스 흐름 순서대로 호출
-   - 활동은 반드시 순서대로 생성 (자동 체이닝)
-   - 갈림길 활동도 manage_activities로 생성 (branch_from 지정 → auto-chain 없이 활동만 생성)
-   - 모든 갈림길 활동 생성 후 set_activity_branch로 분기 설정 (mid 필수, low/high 선택)
-   - 주의: 갈림길 transition은 반드시 2개 이상을 동시에 생성해야 하며,
-     이를 위해 manage_activities의 branch_from 대신 set_activity_branch를 사용
-4. **검증**: get_material_detail로 활동 목록, 유형, 분기 확인
+3. **활동 생성**: manage_activities(action="create")로 활동 생성 (순서 무관)
+   - 갈림길 활동도 동일하게 생성
+4. **코스 흐름 설정**: set_activity_flow로 선형 연결 설정
+   - 활동 ID 배열을 순서대로 전달
+5. **갈림길 설정**: set_activity_branch로 분기 설정 (필요 시, mid 필수 + low/high 선택)
+6. **검증**: get_material_detail로 활동 목록, 유형, 분기 확인
    - type이 "미연결"로 표시되면 activitiable 생성이 실패한 것 → 활동 재생성 필요
 
 ## 주의사항
