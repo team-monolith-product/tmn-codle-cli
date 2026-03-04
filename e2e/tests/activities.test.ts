@@ -6,9 +6,8 @@ import {
   findToolResult,
 } from "../lib/ndjson.js";
 
-describe("activities", () => {
-  // [Single Tool Contract] manage_activities create 계약
-  test("manage_activities로 활동 생성", async ({ claude, factory }) => {
+describe("manage_activities", () => {
+  test("활동 생성 성공", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
 
     const result = await claude.run(
@@ -28,9 +27,27 @@ describe("activities", () => {
     expect(text).toMatch(/활동 생성 완료/);
   });
 
-  // [Single Tool Contract] set_activity_flow 계약
-  // seed: material + 2 activities → Claude는 흐름 설정만 담당
-  test("set_activity_flow로 코스 흐름 설정", async ({ claude, factory }) => {
+  test("활동 삭제 호출", async ({ claude, factory }) => {
+    const material = await createMaterial(factory);
+    const activity = await createActivity(factory, material.id);
+
+    const result = await claude.run(`활동 ID "${activity.id}"를 삭제해줘.`);
+
+    expect(result.toolNames).toContain("mcp__codle__manage_activities");
+
+    const deleteInteractions = findAllToolResults(
+      result.toolInteractions,
+      "mcp__codle__manage_activities",
+    ).filter((i) => i.call.input.action === "delete");
+    expect(deleteInteractions.length).toBeGreaterThanOrEqual(1);
+
+    // AIDEV-NOTE: 활동 삭제 API가 빈 body를 반환하여 "Unexpected end of JSON input" 발생 가능.
+    // 삭제 도구 호출 자체가 성공적으로 이루어졌는지만 확인한다.
+  });
+});
+
+describe("set_activity_flow", () => {
+  test("seed된 활동으로 코스 흐름 설정", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
     const activity1 = await createActivity(factory, material.id, {
       name: "Flow Act 1",
@@ -54,24 +71,5 @@ describe("activities", () => {
     expect(interaction!.result!.isError).toBe(false);
     const text = extractText(interaction!.result!);
     expect(text).toMatch(/코스 흐름/);
-  });
-
-  // [Single Tool Contract] manage_activities delete 계약
-  test("manage_activities로 활동 삭제", async ({ claude, factory }) => {
-    const material = await createMaterial(factory);
-    const activity = await createActivity(factory, material.id);
-
-    const result = await claude.run(`활동 ID "${activity.id}"를 삭제해줘.`);
-
-    expect(result.toolNames).toContain("mcp__codle__manage_activities");
-
-    const deleteInteractions = findAllToolResults(
-      result.toolInteractions,
-      "mcp__codle__manage_activities",
-    ).filter((i) => i.call.input.action === "delete");
-    expect(deleteInteractions.length).toBeGreaterThanOrEqual(1);
-
-    // AIDEV-NOTE: 활동 삭제 API가 빈 body를 반환하여 "Unexpected end of JSON input" 발생 가능.
-    // 삭제 도구 호출 자체가 성공적으로 이루어졌는지만 확인한다.
   });
 });

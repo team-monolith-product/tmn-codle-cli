@@ -2,10 +2,8 @@ import { describe, expect, test } from "../fixtures/claude.js";
 import { createActivity, createMaterial } from "../lib/factory.js";
 import { extractText, findToolResult } from "../lib/ndjson.js";
 
-describe("materials", () => {
-  // [Single Tool Contract] search_materials의 내 자료 검색 계약
-  // [Contrastive Seeding] 유니크 이름으로 seed → 결과에 포함 확인
-  test("search_materials로 내 자료 검색", async ({ claude, factory }) => {
+describe("search_materials", () => {
+  test("seed한 내 자료가 결과에 포함", async ({ claude, factory }) => {
     const uniqueName = `e2e-mine-${Date.now()}`;
     await createMaterial(factory, { name: uniqueName });
 
@@ -24,12 +22,7 @@ describe("materials", () => {
     expect(text).toContain(uniqueName);
   });
 
-  // [Single Tool Contract] search_materials의 공개 자료 검색 계약
-  // [Contrastive Seeding] 내 자료(비공개)가 공개 검색에서 빠지는지 확인
-  test("search_materials로 공개 자료 검색 시 내 자료 미포함", async ({
-    claude,
-    factory,
-  }) => {
+  test("비공개 자료가 공개 검색에서 제외", async ({ claude, factory }) => {
     const uniqueName = `e2e-not-public-${Date.now()}`;
     await createMaterial(factory, { name: uniqueName });
 
@@ -47,13 +40,10 @@ describe("materials", () => {
     const text = extractText(interaction!.result!);
     expect(text).not.toContain(uniqueName);
   });
+});
 
-  // [Single Tool Contract] get_material_detail의 핵심 계약: 자료 + 활동 포함 조회
-  // [Contrastive Seeding] 활동이 있는 자료를 seed해서 활동 정보 포함 여부 확인
-  test("get_material_detail로 자료와 활동 함께 조회", async ({
-    claude,
-    factory,
-  }) => {
+describe("get_material_detail", () => {
+  test("자료와 활동 ID 모두 포함", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
     const activity = await createActivity(factory, material.id, {
       name: `e2e-activity-${Date.now()}`,
@@ -76,10 +66,10 @@ describe("materials", () => {
     expect(text).toContain(material.id);
     expect(text).toContain(activity.id);
   });
+});
 
-  // [Single Tool Contract] manage_materials create 계약만 검증
-  // [Orthogonality] 조회는 위 테스트가 담당, 여기선 생성 성공만 확인
-  test("manage_materials로 자료 생성", async ({ claude }) => {
+describe("manage_materials", () => {
+  test("자료 생성 성공", async ({ claude }) => {
     const materialName = `E2E Test ${Date.now()}`;
     const result = await claude.run(
       `"${materialName}" 이름으로 새 자료를 만들어줘.`,

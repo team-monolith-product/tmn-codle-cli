@@ -21,8 +21,8 @@ npm run e2e
 
 ### 1. Single Tool Contract
 
-한 테스트는 한 도구의 핵심 계약 하나를 검증한다.
-여러 도구가 호출되더라도 주인공 도구의 결과만 깊이 검증하고, 보조 도구는 호출 여부(`toolNames`)만 assert한다.
+한 테스트는 핵심 계약 하나만 검증한다.
+주인공 도구의 결과만 깊이 검증하고, 보조 도구는 호출 여부(`toolNames`)만 assert한다.
 
 ### 2. Black-box Prompting
 
@@ -76,3 +76,21 @@ expect(result.text).toContain("자료를 생성했습니다");
 
 테스트 간 검증 영역이 겹치지 않는다.
 조회 전용 테스트가 있으면 생성 테스트에서 조회를 붙이지 않는다. 각 테스트는 자기 도구의 계약만 책임진다.
+
+### 6. Describe per Tool
+
+`describe`는 MCP 도구명으로 그룹핑한다. 테스트 이름은 검증 내용만 담는다.
+
+```ts
+// Good — 도구별 describe, 테스트는 검증 내용만
+describe("search_materials", () => {
+  test("seed한 내 자료가 결과에 포함", ...);
+  test("비공개 자료가 공개 검색에서 제외", ...);
+});
+
+// Bad — 단일 describe에 도구명을 테스트마다 반복
+describe("materials", () => {
+  test("search_materials — seed한 내 자료가 결과에 포함", ...);
+  test("search_materials — 비공개 자료가 공개 검색에서 제외", ...);
+});
+```
