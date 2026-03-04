@@ -10,7 +10,7 @@ After all steps, output a summary table.
 IMPORTANT:
 
 - Execute steps sequentially. Each step depends on previous results.
-- Use ONLY MCP tools (mcp**codle**\*). Do not use any other tools.
+- Use ONLY MCP tools (`mcp__codle__*`). Do not use any other tools.
 - If a step fails, still continue with remaining steps where possible.
 - Report ALL results at the end.
 
@@ -43,7 +43,7 @@ Expected: Returns material details including activities and tags.
 
 ## Step 6: Create test material
 
-Call `manage_materials` with action="create", name="E2E Test **TIMESTAMP**".
+Call `manage_materials` with action="create", name=`"E2E Test __TIMESTAMP__"`.
 Expected: Returns the created material with an ID. Save this ID for subsequent steps.
 
 ## Step 7: Create first activity
