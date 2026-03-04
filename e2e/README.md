@@ -24,9 +24,9 @@ cp .env.e2e.example .env.e2e
 
 `.env.e2e`에 다음 값을 설정한다:
 
-| 변수 | 설명 |
-|------|------|
-| `E2E_TENANT_NUMBER` | E2E 테넌트 번호 (기본 17) |
+| 변수                 | 설명                                     |
+| -------------------- | ---------------------------------------- |
+| `E2E_TENANT_NUMBER`  | E2E 테넌트 번호 (기본 17)                |
 | `E2E_USER_CLIENT_ID` | Doorkeeper OAuth Application의 client_id |
 
 ```bash
