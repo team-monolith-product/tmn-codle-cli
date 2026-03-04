@@ -44,4 +44,3 @@ MAX_BUDGET=2.00 npm run e2e
 ## 결과 확인
 
 실행 완료 후 터미널에 Quick Summary가 출력된다. 상세 리포트는 `e2e/results/<timestamp>/report.md`에서 확인한다.
-
