@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 RESULT_DIR="$SCRIPT_DIR/results/$TIMESTAMP"
 MAX_BUDGET="${MAX_BUDGET:-1.00}"
@@ -22,7 +22,7 @@ cd "$PROJECT_DIR"
 
 claude -p "$PROMPT" \
     --output-format stream-json \
-    --mcp-config tests/e2e/mcp-config.json \
+    --mcp-config e2e/mcp-config.json \
     --strict-mcp-config \
     --allowed-tools "mcp__codle__*" \
     --max-budget-usd "$MAX_BUDGET" \

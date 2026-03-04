@@ -17,7 +17,7 @@ dist/
 
 # Test
 coverage/
-tests/e2e/results/
+e2e/results/
 
 # Stash (removed features pending reimplementation)
 _stash/
