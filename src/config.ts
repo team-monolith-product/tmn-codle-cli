@@ -1,15 +1,44 @@
 import "dotenv/config";
 
+type Config = {
+  apiUrl: string;
+  port: number;
+  logLevel: string;
+  publicUrl: string;
+  authServerUrl: string;
+};
+
+const defaults: Config = {
+  apiUrl: "https://class.dev.codle.io",
+  port: 3000,
+  logLevel: "INFO",
+  publicUrl: "https://mcp.dev.codle.io",
+  authServerUrl: "https://user.dev.codle.io",
+};
+
+function e2eOverrides(tenant: string): Partial<Config> {
+  return {
+    apiUrl: `https://class.${tenant}.e2e.codle.io`,
+    publicUrl: `https://mcp.${tenant}.e2e.codle.io`,
+    authServerUrl: `https://user.${tenant}.e2e.codle.io`,
+  };
+}
+
+function envOverrides(): Partial<Config> {
+  const strip = (v: string) => v.replace(/\/$/, "");
+  return {
+    ...(process.env.CODLE_API_URL && { apiUrl: strip(process.env.CODLE_API_URL) }),
+    ...(process.env.CODLE_PORT && { port: parseInt(process.env.CODLE_PORT, 10) }),
+    ...(process.env.CODLE_LOG_LEVEL && { logLevel: process.env.CODLE_LOG_LEVEL }),
+    ...(process.env.CODLE_MCP_PUBLIC_URL && { publicUrl: strip(process.env.CODLE_MCP_PUBLIC_URL) }),
+    ...(process.env.CODLE_AUTH_SERVER_URL && { authServerUrl: strip(process.env.CODLE_AUTH_SERVER_URL) }),
+  };
+}
+
 const tenant = process.env.E2E_TENANT_NUMBER;
-const domain = tenant ? `${tenant}.e2e.codle.io` : "dev.codle.io";
 
-const env = (key: string, fallback: string) =>
-  (process.env[key] || fallback).replace(/\/$/, "");
-
-export const config = {
-  apiUrl: env("CODLE_API_URL", `https://class.${domain}`),
-  port: parseInt(process.env.CODLE_PORT || "3000", 10),
-  logLevel: process.env.CODLE_LOG_LEVEL || "INFO",
-  publicUrl: env("CODLE_MCP_PUBLIC_URL", `https://mcp.${domain}`),
-  authServerUrl: env("CODLE_AUTH_SERVER_URL", `https://user.${domain}`),
+export const config: Config = {
+  ...defaults,
+  ...(tenant && e2eOverrides(tenant)),
+  ...envOverrides(),
 };
