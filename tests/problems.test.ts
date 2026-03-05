@@ -21,12 +21,14 @@ vi.mock("../src/api/client.js", () => {
 });
 
 vi.mock("../src/lexical/index.js", () => ({
-  buildSelectBlock: vi.fn((choices: Array<{ text: string; isAnswer: boolean }>) => ({
-    root: {
-      type: "root",
-      children: [{ type: "problem-select", selections: choices }],
-    },
-  })),
+  buildSelectBlock: vi.fn(
+    (choices: Array<{ text: string; isAnswer: boolean }>) => ({
+      root: {
+        type: "root",
+        children: [{ type: "problem-select", selections: choices }],
+      },
+    }),
+  ),
   buildInputBlock: vi.fn((solutions: string[]) => ({
     root: {
       type: "root",
@@ -375,9 +377,7 @@ describe("update_board", () => {
     mockClient.listBoards.mockResolvedValue(
       makeJsonApiListResponse("board", [{ id: "b1" }]),
     );
-    mockClient.updateBoard.mockRejectedValue(
-      new CodleAPIError(422, "Invalid"),
-    );
+    mockClient.updateBoard.mockRejectedValue(new CodleAPIError(422, "Invalid"));
 
     const result = await toolHandlers.update_board({
       activity_id: "1",
@@ -435,9 +435,7 @@ describe("update_sheet_description", () => {
   });
 
   it("API error on activity fetch", async () => {
-    mockClient.request.mockRejectedValue(
-      new CodleAPIError(404, "Not found"),
-    );
+    mockClient.request.mockRejectedValue(new CodleAPIError(404, "Not found"));
 
     const result = await toolHandlers.update_sheet_description({
       activity_id: "999",

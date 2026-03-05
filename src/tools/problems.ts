@@ -498,7 +498,9 @@ export function registerProblemTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `문제 정렬 완료: ${problem_ids.join(" → ")} (activity=${activity_id})`,
+              text: `문제 정렬 완료: ${problem_ids.join(
+                " → ",
+              )} (activity=${activity_id})`,
             },
           ],
         };

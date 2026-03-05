@@ -273,11 +273,9 @@ export class CodleClient {
     sheetActivityId: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request(
-      "PUT",
-      `/api/v1/sheet_activities/${sheetActivityId}`,
-      { json: data },
-    );
+    return this.request("PUT", `/api/v1/sheet_activities/${sheetActivityId}`, {
+      json: data,
+    });
   }
 }
 

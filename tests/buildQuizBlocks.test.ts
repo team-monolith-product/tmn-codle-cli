@@ -12,8 +12,9 @@ describe("buildSelectBlock", () => {
     ]);
 
     expect(result.root.type).toBe("root");
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     expect(children).toHaveLength(1);
 
     const node = children[0];
@@ -41,11 +42,10 @@ describe("buildSelectBlock", () => {
       { text: "수박", isAnswer: false },
     ]);
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
-    const selections = children[0].selections as Array<
+    const children = (result.root as Record<string, unknown>).children as Array<
       Record<string, unknown>
     >;
+    const selections = children[0].selections as Array<Record<string, unknown>>;
     expect(selections).toHaveLength(4);
     expect(selections[1].isAnswer).toBe(true);
     expect(selections[0].isAnswer).toBe(false);
@@ -69,8 +69,9 @@ describe("buildInputBlock", () => {
   it("single solution", () => {
     const result = buildInputBlock(["42"]);
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     expect(children).toHaveLength(1);
 
     const node = children[0];
@@ -81,8 +82,9 @@ describe("buildInputBlock", () => {
   it("multiple solutions", () => {
     const result = buildInputBlock(["서울", "Seoul"]);
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     const node = children[0];
     expect(node.solutions).toEqual(["서울", "Seoul"]);
   });
@@ -90,17 +92,21 @@ describe("buildInputBlock", () => {
   it("with caseSensitive option", () => {
     const result = buildInputBlock(["Hello"], { caseSensitive: true });
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     const node = children[0];
     expect(node.caseSensitive).toBe(true);
   });
 
   it("with placeholder option", () => {
-    const result = buildInputBlock(["정답"], { placeholder: "답을 입력하세요" });
+    const result = buildInputBlock(["정답"], {
+      placeholder: "답을 입력하세요",
+    });
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     const node = children[0];
     expect(node.placeholder).toBe("답을 입력하세요");
   });
@@ -108,8 +114,9 @@ describe("buildInputBlock", () => {
   it("no options omits optional fields", () => {
     const result = buildInputBlock(["test"]);
 
-    const children = (result.root as Record<string, unknown>)
-      .children as Array<Record<string, unknown>>;
+    const children = (result.root as Record<string, unknown>).children as Array<
+      Record<string, unknown>
+    >;
     const node = children[0];
     expect(node.caseSensitive).toBeUndefined();
     expect(node.placeholder).toBeUndefined();
