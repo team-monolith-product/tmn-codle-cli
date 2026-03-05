@@ -21,4 +21,6 @@
 
 # E2E
 
-- [ ] 도구 스키마·description 변경 시 `/e2e-report` 실행 완료
+<!-- 도구 스키마·description 변경 시 아래 체크리스트를 추가하세요:
+- [ ] `/e2e-report` 실행 완료
+-->
