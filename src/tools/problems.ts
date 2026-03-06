@@ -67,7 +67,7 @@ export function registerProblemTools(server: McpServer): void {
           criteria: z
             .array(z.object({ content: z.string(), ratio: z.number() }))
             .optional()
-            .describe("채점기준 상/중/하 순서. [{content, ratio}]"),
+            .describe("채점기준 상/중/하 순서. [{content, ratio(0~1)}] 예: 1.0, 0.7, 0.3"),
         })
         .optional()
         .describe("서술형 채점기준 (descriptive 타입)"),
@@ -149,7 +149,9 @@ export function registerProblemTools(server: McpServer): void {
               });
             } catch (e) {
               warnings.push(
-                `모범답안 생성 실패: ${e instanceof CodleAPIError ? e.detail : String(e)}`,
+                `모범답안 생성 실패: ${
+                  e instanceof CodleAPIError ? e.detail : String(e)
+                }`,
               );
             }
           }
@@ -185,14 +187,15 @@ export function registerProblemTools(server: McpServer): void {
               });
             } catch (e) {
               warnings.push(
-                `채점기준 생성 실패: ${e instanceof CodleAPIError ? e.detail : String(e)}`,
+                `채점기준 생성 실패: ${
+                  e instanceof CodleAPIError ? e.detail : String(e)
+                }`,
               );
             }
           }
 
           let resultText = `문제 생성 완료: [${problemId}] ${problem.title}`;
-          if (warnings.length)
-            resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
+          if (warnings.length) resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
           return {
             content: [{ type: "text" as const, text: resultText }],
           };
@@ -295,7 +298,9 @@ export function registerProblemTools(server: McpServer): void {
               }
             } catch (e) {
               warnings.push(
-                `모범답안 수정 실패: ${e instanceof CodleAPIError ? e.detail : String(e)}`,
+                `모범답안 수정 실패: ${
+                  e instanceof CodleAPIError ? e.detail : String(e)
+                }`,
               );
             }
           }
@@ -307,11 +312,9 @@ export function registerProblemTools(server: McpServer): void {
                 { params: { include: "descriptive_criterium" } },
               );
               const included =
-                (
-                  (probResp as Record<string, unknown>).included as Array<
-                    Record<string, unknown>
-                  >
-                ) || [];
+                ((probResp as Record<string, unknown>).included as Array<
+                  Record<string, unknown>
+                >) || [];
               const existingDC = included.find(
                 (i) => i.type === "descriptive_criterium",
               );
@@ -353,14 +356,15 @@ export function registerProblemTools(server: McpServer): void {
               }
             } catch (e) {
               warnings.push(
-                `채점기준 수정 실패: ${e instanceof CodleAPIError ? e.detail : String(e)}`,
+                `채점기준 수정 실패: ${
+                  e instanceof CodleAPIError ? e.detail : String(e)
+                }`,
               );
             }
           }
 
           let resultText = `문제 수정 완료: [${problem.id}] ${problem.title}`;
-          if (warnings.length)
-            resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
+          if (warnings.length) resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
           return {
             content: [{ type: "text" as const, text: resultText }],
           };
