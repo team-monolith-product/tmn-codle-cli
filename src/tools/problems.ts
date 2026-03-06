@@ -35,7 +35,9 @@ export function registerProblemTools(server: McpServer): void {
           }),
         )
         .optional()
-        .describe("객관식 선택지 (quiz 타입). [{text, isAnswer, imageUrl?, imageAlt?}]"),
+        .describe(
+          "객관식 선택지 (quiz 타입). [{text, isAnswer, imageUrl?, imageAlt?}]",
+        ),
       solutions: z
         .array(z.string())
         .optional()

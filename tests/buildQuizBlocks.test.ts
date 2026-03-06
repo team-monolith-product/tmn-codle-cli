@@ -56,8 +56,17 @@ describe("buildSelectBlock", () => {
 
   it("choices with imageUrl produce show.image object", () => {
     const result = buildSelectBlock([
-      { text: "사과", isAnswer: true, imageUrl: "https://example.com/apple.png", imageAlt: "사과 이미지" },
-      { text: "바나나", isAnswer: false, imageUrl: "https://example.com/banana.png" },
+      {
+        text: "사과",
+        isAnswer: true,
+        imageUrl: "https://example.com/apple.png",
+        imageAlt: "사과 이미지",
+      },
+      {
+        text: "바나나",
+        isAnswer: false,
+        imageUrl: "https://example.com/banana.png",
+      },
       { text: "포도", isAnswer: false },
     ]);
 
@@ -68,12 +77,18 @@ describe("buildSelectBlock", () => {
     expect(selections).toHaveLength(3);
     expect(selections[0]).toEqual({
       isAnswer: true,
-      show: { text: "사과", image: { src: "https://example.com/apple.png", altText: "사과 이미지" } },
+      show: {
+        text: "사과",
+        image: { src: "https://example.com/apple.png", altText: "사과 이미지" },
+      },
       value: "0",
     });
     expect(selections[1]).toEqual({
       isAnswer: false,
-      show: { text: "바나나", image: { src: "https://example.com/banana.png", altText: "" } },
+      show: {
+        text: "바나나",
+        image: { src: "https://example.com/banana.png", altText: "" },
+      },
       value: "1",
     });
     expect(selections[2]).toEqual({
