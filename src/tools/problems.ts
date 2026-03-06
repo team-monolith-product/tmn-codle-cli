@@ -80,9 +80,9 @@ export function registerProblemTools(server: McpServer): void {
 
         let blocks: unknown | undefined;
         if (choices?.length) {
-          blocks = buildSelectBlock(choices);
+          blocks = buildSelectBlock(choices, content);
         } else if (solutions?.length) {
-          blocks = buildInputBlock(solutions, input_options);
+          blocks = buildInputBlock(solutions, input_options, content);
         } else if (content !== undefined) {
           // AIDEV-NOTE: Rails Problem 모델은 모든 타입에서 blocks presence를 요구한다.
           // sheet/descriptive 타입은 choices/solutions가 없으므로 content를 Lexical로 변환하여 blocks에 넣는다.
@@ -139,9 +139,9 @@ export function registerProblemTools(server: McpServer): void {
 
         let blocks: unknown | undefined;
         if (choices?.length) {
-          blocks = buildSelectBlock(choices);
+          blocks = buildSelectBlock(choices, content);
         } else if (solutions?.length) {
-          blocks = buildInputBlock(solutions, input_options);
+          blocks = buildInputBlock(solutions, input_options, content);
         } else if (content !== undefined) {
           blocks = convertFromMarkdown(content);
         }
