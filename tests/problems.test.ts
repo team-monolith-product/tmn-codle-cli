@@ -339,15 +339,47 @@ describe("manage_problem_collection_problems reorder", () => {
   });
 });
 
-// ===== update_board =====
+// ===== update_activitiable =====
 
-describe("update_board", () => {
+function makeActivitiableResponse(
+  activitiableId: string | undefined,
+  type: string,
+) {
+  return {
+    data: {
+      id: "1",
+      type: "activity",
+      attributes: {},
+      relationships: {
+        activitiable: {
+          data: activitiableId ? { id: activitiableId, type } : {},
+        },
+      },
+    },
+  };
+}
+
+describe("update_activitiable — BoardActivity", () => {
+  it("no valid params for board", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ba1", "board_activity"),
+    );
+
+    const result = await toolHandlers.update_activitiable({
+      activity_id: "1",
+    });
+    expect(getText(result)).toContain("content 또는 name 중 하나 이상 필요");
+  });
+
   it("no board found", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ba1", "board_activity"),
+    );
     mockClient.listBoards.mockResolvedValue(
       makeJsonApiListResponse("board", []),
     );
 
-    const result = await toolHandlers.update_board({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       content: "# Hello",
     });
@@ -355,6 +387,9 @@ describe("update_board", () => {
   });
 
   it("successful update", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ba1", "board_activity"),
+    );
     mockClient.listBoards.mockResolvedValue(
       makeJsonApiListResponse("board", [{ id: "b1", name: "보드" }]),
     );
@@ -362,7 +397,7 @@ describe("update_board", () => {
       makeJsonApiResponse("board", "b1", { name: "보드" }),
     );
 
-    const result = await toolHandlers.update_board({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       content: "# 안내문",
       name: "새 보드",
@@ -374,13 +409,18 @@ describe("update_board", () => {
     expect(payload.data.attributes.name).toBe("새 보드");
   });
 
-  it("API error", async () => {
+  it("API error on board update", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ba1", "board_activity"),
+    );
     mockClient.listBoards.mockResolvedValue(
       makeJsonApiListResponse("board", [{ id: "b1" }]),
     );
-    mockClient.updateBoard.mockRejectedValue(new CodleAPIError(422, "Invalid"));
+    mockClient.updateBoard.mockRejectedValue(
+      new CodleAPIError(422, "Invalid"),
+    );
 
-    const result = await toolHandlers.update_board({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       content: "# test",
     });
@@ -388,44 +428,27 @@ describe("update_board", () => {
   });
 });
 
-// ===== update_sheet_description =====
+describe("update_activitiable — SheetActivity", () => {
+  it("no content for sheet", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("sa1", "sheet_activity"),
+    );
 
-describe("update_sheet_description", () => {
-  it("no activitiable found", async () => {
-    mockClient.request.mockResolvedValue({
-      data: {
-        id: "1",
-        type: "activity",
-        attributes: {},
-        relationships: {
-          activitiable: { data: {} },
-        },
-      },
-    });
-
-    const result = await toolHandlers.update_sheet_description({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
-      content: "# 설명",
     });
-    expect(getText(result)).toContain("SheetActivity ID를 찾을 수 없습니다");
+    expect(getText(result)).toContain("content는 필수");
   });
 
   it("successful update", async () => {
-    mockClient.request.mockResolvedValue({
-      data: {
-        id: "1",
-        type: "activity",
-        attributes: {},
-        relationships: {
-          activitiable: { data: { id: "sa1", type: "sheet_activity" } },
-        },
-      },
-    });
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("sa1", "sheet_activity"),
+    );
     mockClient.updateSheetActivity.mockResolvedValue(
       makeJsonApiResponse("sheet_activity", "sa1", {}),
     );
 
-    const result = await toolHandlers.update_sheet_description({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       content: "# 활동지 설명",
     });
@@ -438,7 +461,7 @@ describe("update_sheet_description", () => {
   it("API error on activity fetch", async () => {
     mockClient.request.mockRejectedValue(new CodleAPIError(404, "Not found"));
 
-    const result = await toolHandlers.update_sheet_description({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "999",
       content: "# test",
     });
@@ -446,48 +469,41 @@ describe("update_sheet_description", () => {
   });
 });
 
-// ===== update_embedded_activity =====
-
-function makeActivitiableResponse(id: string | undefined) {
-  return {
-    data: {
-      id: "1",
-      type: "activity",
-      attributes: {},
-      relationships: {
-        activitiable: { data: id ? { id, type: "embedded_activity" } : {} },
-      },
-    },
-  };
-}
-
-describe("update_embedded_activity", () => {
+describe("update_activitiable — EmbeddedActivity", () => {
   it("nothing to update", async () => {
-    const result = await toolHandlers.update_embedded_activity({
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ea1", "embedded_activity"),
+    );
+
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
     });
     expect(getText(result)).toContain("url 또는 goals 중 하나 이상 필요");
   });
 
   it("no activitiable found", async () => {
-    mockClient.request.mockResolvedValue(makeActivitiableResponse(undefined));
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse(undefined, "embedded_activity"),
+    );
 
-    const result = await toolHandlers.update_embedded_activity({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       url: "https://example.com",
     });
-    expect(getText(result)).toContain("EmbeddedActivity ID를 찾을 수 없습니다");
+    expect(getText(result)).toContain("activitiable을 찾을 수 없습니다");
   });
 
   it("url only", async () => {
-    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ea1", "embedded_activity"),
+    );
     mockClient.updateEmbeddedActivity.mockResolvedValue(
       makeJsonApiResponse("embedded_activity", "ea1", {
         url: "https://example.com",
       }),
     );
 
-    const result = await toolHandlers.update_embedded_activity({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       url: "https://example.com",
     });
@@ -499,12 +515,14 @@ describe("update_embedded_activity", () => {
   });
 
   it("goals only", async () => {
-    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ea1", "embedded_activity"),
+    );
     mockClient.updateEmbeddedActivity.mockResolvedValue(
       makeJsonApiResponse("embedded_activity", "ea1", {}),
     );
 
-    const result = await toolHandlers.update_embedded_activity({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       goals: ["목표1", "목표2"],
     });
@@ -516,12 +534,14 @@ describe("update_embedded_activity", () => {
   });
 
   it("url + goals together", async () => {
-    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ea1", "embedded_activity"),
+    );
     mockClient.updateEmbeddedActivity.mockResolvedValue(
       makeJsonApiResponse("embedded_activity", "ea1", {}),
     );
 
-    const result = await toolHandlers.update_embedded_activity({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       url: "https://codle.io",
       goals: ["학습목표"],
@@ -534,15 +554,31 @@ describe("update_embedded_activity", () => {
   });
 
   it("API error on update", async () => {
-    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("ea1", "embedded_activity"),
+    );
     mockClient.updateEmbeddedActivity.mockRejectedValue(
       new CodleAPIError(422, "Invalid URL"),
     );
 
-    const result = await toolHandlers.update_embedded_activity({
+    const result = await toolHandlers.update_activitiable({
       activity_id: "1",
       url: "bad-url",
     });
     expect(getText(result)).toContain("EmbeddedActivity 업데이트 실패");
+  });
+});
+
+describe("update_activitiable — unsupported type", () => {
+  it("returns error for unsupported type", async () => {
+    mockClient.request.mockResolvedValue(
+      makeActivitiableResponse("va1", "video_activity"),
+    );
+
+    const result = await toolHandlers.update_activitiable({
+      activity_id: "1",
+      url: "https://example.com",
+    });
+    expect(getText(result)).toContain("지원하지 않는 유형");
   });
 });
