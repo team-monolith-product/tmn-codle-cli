@@ -16,6 +16,7 @@ vi.mock("../src/api/client.js", () => {
     listBoards: vi.fn(),
     updateBoard: vi.fn(),
     updateSheetActivity: vi.fn(),
+    updateEmbeddedActivity: vi.fn(),
   };
   return { client: mockClient, CodleClient: vi.fn() };
 });
@@ -44,7 +45,7 @@ const { client } = await import("../src/api/client.js");
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerProblemTools } from "../src/tools/problems.js";
-import { registerContentTools } from "../src/tools/content.js";
+import { registerActivitiableTools } from "../src/tools/activitiables.js";
 
 const toolHandlers: Record<string, Function> = {};
 const mockServer = {
@@ -53,7 +54,7 @@ const mockServer = {
   },
 } as unknown as McpServer;
 registerProblemTools(mockServer);
-registerContentTools(mockServer);
+registerActivitiableTools(mockServer);
 
 const mockClient = client as unknown as Record<
   string,
@@ -442,5 +443,106 @@ describe("update_sheet_description", () => {
       content: "# test",
     });
     expect(getText(result)).toContain("Activity 조회 실패");
+  });
+});
+
+// ===== update_embedded_activity =====
+
+function makeActivitiableResponse(id: string | undefined) {
+  return {
+    data: {
+      id: "1",
+      type: "activity",
+      attributes: {},
+      relationships: {
+        activitiable: { data: id ? { id, type: "embedded_activity" } : {} },
+      },
+    },
+  };
+}
+
+describe("update_embedded_activity", () => {
+  it("nothing to update", async () => {
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+    });
+    expect(getText(result)).toContain("url 또는 goals 중 하나 이상 필요");
+  });
+
+  it("no activitiable found", async () => {
+    mockClient.request.mockResolvedValue(makeActivitiableResponse(undefined));
+
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+      url: "https://example.com",
+    });
+    expect(getText(result)).toContain("EmbeddedActivity ID를 찾을 수 없습니다");
+  });
+
+  it("url only", async () => {
+    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.updateEmbeddedActivity.mockResolvedValue(
+      makeJsonApiResponse("embedded_activity", "ea1", {
+        url: "https://example.com",
+      }),
+    );
+
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+      url: "https://example.com",
+    });
+    expect(getText(result)).toContain("EmbeddedActivity 업데이트 완료");
+
+    const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
+    expect(payload.data.attributes.url).toBe("https://example.com");
+    expect(payload.data.attributes.goals).toBeUndefined();
+  });
+
+  it("goals only", async () => {
+    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.updateEmbeddedActivity.mockResolvedValue(
+      makeJsonApiResponse("embedded_activity", "ea1", {}),
+    );
+
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+      goals: ["목표1", "목표2"],
+    });
+    expect(getText(result)).toContain("EmbeddedActivity 업데이트 완료");
+
+    const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
+    expect(payload.data.attributes.url).toBeUndefined();
+    expect(payload.data.attributes.goals).toHaveLength(2);
+  });
+
+  it("url + goals together", async () => {
+    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.updateEmbeddedActivity.mockResolvedValue(
+      makeJsonApiResponse("embedded_activity", "ea1", {}),
+    );
+
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+      url: "https://codle.io",
+      goals: ["학습목표"],
+    });
+    expect(getText(result)).toContain("EmbeddedActivity 업데이트 완료");
+
+    const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
+    expect(payload.data.attributes.url).toBe("https://codle.io");
+    expect(payload.data.attributes.goals).toHaveLength(1);
+  });
+
+  it("API error on update", async () => {
+    mockClient.request.mockResolvedValue(makeActivitiableResponse("ea1"));
+    mockClient.updateEmbeddedActivity.mockRejectedValue(
+      new CodleAPIError(422, "Invalid URL"),
+    );
+
+    const result = await toolHandlers.update_embedded_activity({
+      activity_id: "1",
+      url: "bad-url",
+    });
+    expect(getText(result)).toContain("EmbeddedActivity 업데이트 실패");
   });
 });

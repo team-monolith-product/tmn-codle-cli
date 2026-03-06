@@ -9,7 +9,7 @@ import {
 } from "../api/models.js";
 import { convertFromMarkdown } from "../lexical/index.js";
 
-export function registerContentTools(server: McpServer): void {
+export function registerActivitiableTools(server: McpServer): void {
   server.tool(
     "update_board",
     "BoardActivity의 안내문을 markdown으로 설정.",
@@ -78,6 +78,112 @@ export function registerContentTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text: `보드 업데이트 실패: ${e.detail}`,
+              },
+            ],
+          };
+        }
+        throw e;
+      }
+    },
+  );
+
+  server.tool(
+    "update_embedded_activity",
+    "EmbeddedActivity(URL 활동)의 URL과 학습목표를 설정.",
+    {
+      activity_id: z.string().describe("활동 ID"),
+      url: z.string().optional().describe("외부 URL"),
+      goals: z
+        .array(z.string())
+        .optional()
+        .describe("학습목표 배열 (각 항목은 markdown 문자열)"),
+    },
+    async ({ activity_id, url, goals }) => {
+      if (url === undefined && goals === undefined) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "url 또는 goals 중 하나 이상 필요합니다.",
+            },
+          ],
+        };
+      }
+
+      // activity_id → embedded_activity_id 조회
+      let embeddedActivityId: string;
+      try {
+        const actResp = await client.request(
+          "GET",
+          `/api/v1/activities/${activity_id}`,
+          {
+            params: { include: "activitiable" },
+          },
+        );
+        const actData = (actResp.data as Record<string, unknown>) || {};
+        const relationships =
+          (actData.relationships as Record<string, unknown>) || {};
+        const activitiable =
+          (relationships.activitiable as Record<string, unknown>) || {};
+        const rel = (activitiable.data as Record<string, unknown>) || {};
+        embeddedActivityId = String(rel.id || "");
+
+        if (!embeddedActivityId) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `활동 ${activity_id}에서 EmbeddedActivity ID를 찾을 수 없습니다.`,
+              },
+            ],
+          };
+        }
+      } catch (e) {
+        if (e instanceof CodleAPIError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Activity 조회 실패: ${e.detail}`,
+              },
+            ],
+          };
+        }
+        throw e;
+      }
+
+      const attrs: Record<string, unknown> = {};
+      if (url !== undefined) attrs.url = url;
+      if (goals !== undefined) {
+        attrs.goals = goals.map((g) => convertFromMarkdown(g));
+      }
+
+      const payload = buildJsonApiPayload(
+        "embedded_activities",
+        attrs,
+        embeddedActivityId,
+      );
+      try {
+        const response = await client.updateEmbeddedActivity(
+          embeddedActivityId,
+          payload as Record<string, unknown>,
+        );
+        const embedded = extractSingle(response);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `EmbeddedActivity 업데이트 완료: [${embedded.id}] (activity=${activity_id})`,
+            },
+          ],
+        };
+      } catch (e) {
+        if (e instanceof CodleAPIError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `EmbeddedActivity 업데이트 실패: ${e.detail}`,
               },
             ],
           };

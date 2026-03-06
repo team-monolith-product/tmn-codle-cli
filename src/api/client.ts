@@ -268,6 +268,18 @@ export class CodleClient {
     return this.request("PUT", `/api/v1/boards/${boardId}`, { json: data });
   }
 
+  // --- Embedded Activities ---
+  async updateEmbeddedActivity(
+    embeddedActivityId: string,
+    data: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.request(
+      "PUT",
+      `/api/v1/embedded_activities/${embeddedActivityId}`,
+      { json: data },
+    );
+  }
+
   // --- Sheet Activities ---
   async updateSheetActivity(
     sheetActivityId: string,

@@ -25,7 +25,8 @@ const SERVER_OPTIONS = {
 
 1. 퀴즈 활동: manage_problems로 문제 생성 → manage_problem_collection_problems로 활동에 연결
 2. 보드 활동: update_board로 안내문 설정 (markdown 입력)
-3. 활동지: manage_problems로 문제 생성 → manage_problem_collection_problems로 연결 + update_sheet_description으로 설명 설정`,
+3. 활동지: manage_problems로 문제 생성 → manage_problem_collection_problems로 연결 + update_sheet_description으로 설명 설정
+4. URL 활동: update_embedded_activity로 URL과 학습목표 설정`,
 };
 
 export function createServer(): McpServer {
