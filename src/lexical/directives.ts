@@ -77,7 +77,14 @@ export function extractDirectives(markdown: string): {
           attrs,
           contentLines,
         });
+        // AIDEV-NOTE: placeholder 앞뒤에 blank line을 보장한다.
+        // 그렇지 않으면 markdown 파서가 직전/직후 텍스트와 같은 paragraph로 합쳐서
+        // getPlaceholderIndex가 매칭에 실패하고 placeholder 문자열이 그대로 노출된다.
+        if (output.length > 0 && output[output.length - 1].trim() !== "") {
+          output.push("");
+        }
         output.push(`DIRECTIVEPLACEHOLDER${idx}END`);
+        output.push("");
         continue;
       }
     }
