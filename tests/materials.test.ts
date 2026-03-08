@@ -235,7 +235,15 @@ describe("manage_materials", () => {
             type: "paragraph",
             version: 1,
             children: [
-              { type: "text", text: "본문 내용", mode: "normal", style: "", detail: 0, format: 0, version: 1 },
+              {
+                type: "text",
+                text: "본문 내용",
+                mode: "normal",
+                style: "",
+                detail: 0,
+                format: 0,
+                version: 1,
+              },
             ],
             direction: "ltr",
             format: "",

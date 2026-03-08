@@ -203,7 +203,7 @@ export function registerMaterialTools(server: McpServer): void {
         .string()
         .optional()
         .describe(
-          "자료 본문 (Lexical JSON 문자열). 예: {\"root\":{\"type\":\"root\",\"version\":1,\"children\":[{\"type\":\"paragraph\",\"version\":1,\"children\":[{\"type\":\"text\",\"text\":\"내용\",\"mode\":\"normal\",\"style\":\"\",\"detail\":0,\"format\":0,\"version\":1}],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"textFormat\":0,\"textStyle\":\"\"}],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0}}",
+          '자료 본문 (Lexical JSON 문자열). 예: {"root":{"type":"root","version":1,"children":[{"type":"paragraph","version":1,"children":[{"type":"text","text":"내용","mode":"normal","style":"","detail":0,"format":0,"version":1}],"direction":"ltr","format":"","indent":0,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0}}',
         ),
     },
     async ({ action, material_id, name, is_public, tag_ids, body }) => {
