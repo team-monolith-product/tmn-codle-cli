@@ -24,6 +24,14 @@ const ACTIVITIABLE_ENDPOINTS: Record<string, string> = {
 
 const ACTIVITIABLE_TYPES = Object.keys(ACTIVITIABLE_ENDPOINTS);
 
+/** "Quiz" → "QuizActivity", "QuizActivity" → "QuizActivity" */
+function normalizeActivityType(input: string): string {
+  if (ACTIVITIABLE_TYPES.includes(input)) return input;
+  const withSuffix = input + "Activity";
+  if (ACTIVITIABLE_TYPES.includes(withSuffix)) return withSuffix;
+  return input;
+}
+
 export function pascalToSnake(name: string): string {
   let result = "";
   for (let i = 0; i < name.length; i++) {
@@ -57,7 +65,7 @@ export function registerActivityTools(server: McpServer): void {
         .string()
         .optional()
         .describe(
-          "활동 유형 (create 시 필수). HtmlActivity, QuizActivity, BoardActivity, SheetActivity, VideoActivity, EmbeddedActivity 등",
+          "활동 유형 (create 시 필수). Html, Quiz, Board, Sheet, Video, Embedded 등 (Activity 접미사 생략 가능)",
         ),
       depth: z
         .number()
@@ -92,7 +100,8 @@ export function registerActivityTools(server: McpServer): void {
             ],
           };
         }
-        if (!ACTIVITIABLE_TYPES.includes(activity_type)) {
+        const resolvedType = normalizeActivityType(activity_type);
+        if (!ACTIVITIABLE_TYPES.includes(resolvedType)) {
           return {
             content: [
               {
@@ -106,13 +115,13 @@ export function registerActivityTools(server: McpServer): void {
         }
 
         // 1단계: activitiable 생성
-        const endpoint = ACTIVITIABLE_ENDPOINTS[activity_type];
-        const jsonapiType = pascalToSnake(activity_type);
+        const endpoint = ACTIVITIABLE_ENDPOINTS[resolvedType];
+        const jsonapiType = pascalToSnake(resolvedType);
         const activitiableAttrs: Record<string, unknown> = {};
         if (
           url !== undefined &&
-          (activity_type === "VideoActivity" ||
-            activity_type === "EmbeddedActivity")
+          (resolvedType === "VideoActivity" ||
+            resolvedType === "EmbeddedActivity")
         ) {
           activitiableAttrs.url = url;
         }
@@ -132,7 +141,7 @@ export function registerActivityTools(server: McpServer): void {
               content: [
                 {
                   type: "text",
-                  text: `activitiable(${activity_type}) 생성 실패: 응답에 id 없음.`,
+                  text: `activitiable(${resolvedType}) 생성 실패: 응답에 id 없음.`,
                 },
               ],
             };
@@ -143,7 +152,7 @@ export function registerActivityTools(server: McpServer): void {
               content: [
                 {
                   type: "text",
-                  text: `activitiable(${activity_type}) 생성 실패: ${e.detail}`,
+                  text: `activitiable(${resolvedType}) 생성 실패: ${e.detail}`,
                 },
               ],
             };
@@ -158,7 +167,7 @@ export function registerActivityTools(server: McpServer): void {
           name,
           material_id,
           depth: apiDepth,
-          activitiable_type: activity_type,
+          activitiable_type: resolvedType,
           activitiable_id: activitiableId,
         };
         if (tag_ids?.length) attrs.tag_ids = tag_ids;
@@ -173,7 +182,7 @@ export function registerActivityTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${activity_type})`,
+              text: `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${resolvedType})`,
             },
           ],
         };
