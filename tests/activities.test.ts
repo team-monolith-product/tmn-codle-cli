@@ -169,6 +169,98 @@ describe("manage_activities create", () => {
     expect(callArgs.data.attributes.depth).toBe(0);
   });
 
+  it("passes entry_category to activitiable attributes for EntryActivity", async () => {
+    mockClient.request.mockResolvedValue(
+      makeJsonApiResponse("entry_activity", "88", { category: "stage" }),
+    );
+    mockClient.createActivity.mockResolvedValue(
+      makeJsonApiResponse("activity", "101", {
+        name: "엔트리스테이지",
+        depth: 0,
+        material_id: "1",
+      }),
+    );
+
+    const result = await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "엔트리스테이지",
+      activity_type: "EntryActivity",
+      entry_category: "stage",
+    });
+
+    expect(getText(result)).toContain("생성 완료");
+    expect(mockClient.request).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/entry_activities",
+      {
+        json: {
+          data: {
+            type: "entry_activity",
+            attributes: { category: "stage" },
+          },
+        },
+      },
+    );
+  });
+
+  it("ignores entry_category for non-EntryActivity types", async () => {
+    mockClient.request.mockResolvedValue(
+      makeJsonApiResponse("quiz_activity", "99", {}),
+    );
+    mockClient.createActivity.mockResolvedValue(
+      makeJsonApiResponse("activity", "100", {
+        name: "퀴즈",
+        depth: 0,
+        material_id: "1",
+      }),
+    );
+
+    await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "퀴즈",
+      activity_type: "QuizActivity",
+      entry_category: "stage",
+    });
+
+    expect(mockClient.request).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/quiz_activities",
+      {
+        json: { data: { type: "quiz_activity", attributes: {} } },
+      },
+    );
+  });
+
+  it("defaults to empty attributes when entry_category omitted for EntryActivity", async () => {
+    mockClient.request.mockResolvedValue(
+      makeJsonApiResponse("entry_activity", "88", {}),
+    );
+    mockClient.createActivity.mockResolvedValue(
+      makeJsonApiResponse("activity", "101", {
+        name: "엔트리기본",
+        depth: 0,
+        material_id: "1",
+      }),
+    );
+
+    await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "엔트리기본",
+      activity_type: "EntryActivity",
+    });
+
+    expect(mockClient.request).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/entry_activities",
+      {
+        json: { data: { type: "entry_activity", attributes: {} } },
+      },
+    );
+  });
+
   it("activitiable no id in response", async () => {
     mockClient.request.mockResolvedValue({
       data: { type: "quiz_activity", attributes: {} },
