@@ -42,7 +42,8 @@ export default class CostReporter implements Reporter {
         for (const t of task.tasks) {
           if (t.type !== "test") continue;
           const meta = t.meta as unknown as TestMeta;
-          const passed = meta?.passCount ?? (t.result?.state === "pass" ? 1 : 0);
+          const passed =
+            meta?.passCount ?? (t.result?.state === "pass" ? 1 : 0);
           const runs = meta?.runCount ?? 1;
           rows.push({
             name: `${task.name} > ${t.name}`,

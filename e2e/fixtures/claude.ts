@@ -10,10 +10,7 @@ const MCP_CONFIG_PATH = resolve(
 );
 const PROJECT_DIR = resolve(import.meta.dirname, "..", "..");
 
-const E2E_REPEATS = Math.max(
-  0,
-  parseInt(process.env.E2E_REPEATS || "1") - 1,
-);
+const E2E_REPEATS = Math.max(0, parseInt(process.env.E2E_REPEATS || "1") - 1);
 
 export const test = base.extend<{
   claude: ClaudeRunner;
@@ -56,19 +53,16 @@ export const test = base.extend<{
 // `retry`). We inject repeats via describe options so child tests inherit them.
 export const describe: typeof _describe =
   E2E_REPEATS > 0
-    ? (Object.assign(
-        (name: string, ...args: any[]) => {
-          if (typeof args[0] === "function") {
-            return (_describe as any)(name, { repeats: E2E_REPEATS }, args[0]);
-          }
-          return (_describe as any)(
-            name,
-            { repeats: E2E_REPEATS, ...args[0] },
-            args[1],
-          );
-        },
-        _describe,
-      ) as typeof _describe)
+    ? (Object.assign((name: string, ...args: any[]) => {
+        if (typeof args[0] === "function") {
+          return (_describe as any)(name, { repeats: E2E_REPEATS }, args[0]);
+        }
+        return (_describe as any)(
+          name,
+          { repeats: E2E_REPEATS, ...args[0] },
+          args[1],
+        );
+      }, _describe) as typeof _describe)
     : _describe;
 
 export { expect };
