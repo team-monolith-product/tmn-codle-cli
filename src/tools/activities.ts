@@ -24,6 +24,14 @@ const ACTIVITIABLE_ENDPOINTS: Record<string, string> = {
 
 const ACTIVITIABLE_TYPES = Object.keys(ACTIVITIABLE_ENDPOINTS);
 
+/** "Quiz" → "QuizActivity", "QuizActivity" → "QuizActivity" */
+function normalizeActivityType(input: string): string {
+  if (ACTIVITIABLE_TYPES.includes(input)) return input;
+  const withSuffix = input + "Activity";
+  if (ACTIVITIABLE_TYPES.includes(withSuffix)) return withSuffix;
+  return input;
+}
+
 export function pascalToSnake(name: string): string {
   let result = "";
   for (let i = 0; i < name.length; i++) {
@@ -39,7 +47,7 @@ export function pascalToSnake(name: string): string {
 export function registerActivityTools(server: McpServer): void {
   server.tool(
     "manage_activities",
-    `활동(Activity) CRUD. QuizActivity, SheetActivity는 생성 후 관리자 화면에서 문제 연결 필요.`,
+    "활동(Activity) CRUD. Quiz/Sheet는 생성 후 manage_problem_collection_problems로 문제 연결.",
     {
       action: z
         .enum(["create", "update", "delete", "duplicate"])
@@ -57,7 +65,7 @@ export function registerActivityTools(server: McpServer): void {
         .string()
         .optional()
         .describe(
-          "활동 유형 (create 시 필수). HtmlActivity, QuizActivity, BoardActivity, SheetActivity, StudioActivity, VideoActivity 등",
+          "활동 유형 (create 시 필수). Html, Quiz, Board, Sheet, Video, Embedded 등",
         ),
       depth: z
         .number()
@@ -92,7 +100,8 @@ export function registerActivityTools(server: McpServer): void {
             ],
           };
         }
-        if (!ACTIVITIABLE_TYPES.includes(activity_type)) {
+        const resolvedType = normalizeActivityType(activity_type);
+        if (!ACTIVITIABLE_TYPES.includes(resolvedType)) {
           return {
             content: [
               {
@@ -106,13 +115,13 @@ export function registerActivityTools(server: McpServer): void {
         }
 
         // 1단계: activitiable 생성
-        const endpoint = ACTIVITIABLE_ENDPOINTS[activity_type];
-        const jsonapiType = pascalToSnake(activity_type);
+        const endpoint = ACTIVITIABLE_ENDPOINTS[resolvedType];
+        const jsonapiType = pascalToSnake(resolvedType);
         const activitiableAttrs: Record<string, unknown> = {};
         if (
           url !== undefined &&
-          (activity_type === "VideoActivity" ||
-            activity_type === "EmbeddedActivity")
+          (resolvedType === "VideoActivity" ||
+            resolvedType === "EmbeddedActivity")
         ) {
           activitiableAttrs.url = url;
         }
@@ -132,7 +141,7 @@ export function registerActivityTools(server: McpServer): void {
               content: [
                 {
                   type: "text",
-                  text: `activitiable(${activity_type}) 생성 실패: 응답에 id 없음.`,
+                  text: `activitiable(${resolvedType}) 생성 실패: 응답에 id 없음.`,
                 },
               ],
             };
@@ -143,7 +152,7 @@ export function registerActivityTools(server: McpServer): void {
               content: [
                 {
                   type: "text",
-                  text: `activitiable(${activity_type}) 생성 실패: ${e.detail}`,
+                  text: `activitiable(${resolvedType}) 생성 실패: ${e.detail}`,
                 },
               ],
             };
@@ -158,7 +167,7 @@ export function registerActivityTools(server: McpServer): void {
           name,
           material_id,
           depth: apiDepth,
-          activitiable_type: activity_type,
+          activitiable_type: resolvedType,
           activitiable_id: activitiableId,
         };
         if (tag_ids?.length) attrs.tag_ids = tag_ids;
@@ -173,7 +182,7 @@ export function registerActivityTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${activity_type})`,
+              text: `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${resolvedType})`,
             },
           ],
         };
@@ -408,7 +417,7 @@ export function registerActivityTools(server: McpServer): void {
 
   server.tool(
     "set_activity_branch",
-    "갈림길 transition을 일괄 설정합니다. mid 필수, low/high 선택 (최소 2개).",
+    "갈림길 transition을 일괄 설정. branch_from의 기존 transition(선형 포함)을 교체. mid 필수, low/high 선택 (최소 2개).",
     {
       material_id: z.string().describe("자료 ID"),
       branch_from: z
