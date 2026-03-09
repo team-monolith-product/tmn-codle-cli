@@ -679,12 +679,12 @@ describe("update_activitiable — EmbeddedActivity", () => {
 describe("update_activitiable — unsupported type", () => {
   it("returns error for unsupported type", async () => {
     mockClient.request.mockResolvedValue(
-      makeActivitiableResponse("va1", "video_activity"),
+      makeActivitiableResponse("qa1", "quiz_activity"),
     );
 
     const result = await toolHandlers.update_activitiable({
       activity_id: "1",
-      url: "https://example.com",
+      content: "test",
     });
     expect(getText(result)).toContain("지원하지 않는 유형");
   });

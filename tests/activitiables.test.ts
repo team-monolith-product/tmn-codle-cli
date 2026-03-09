@@ -279,6 +279,78 @@ describe("update_activitiable — EmbeddedActivity", () => {
   });
 });
 
+describe("update_activitiable — VideoActivity", () => {
+  beforeEach(() => {
+    mockResolveActivitiable("video_activity", "v1");
+  });
+
+  it("url 없으면 에러", async () => {
+    const result = await toolHandlers.update_activitiable({
+      activity_id: "act-1",
+    });
+    expect(getText(result)).toContain("url은 필수");
+  });
+
+  it("url로 업데이트 성공", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "video_activity", id: "v1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(
+        makeJsonApiResponse("video_activity", "v1", {}),
+      );
+
+    const result = await toolHandlers.update_activitiable({
+      activity_id: "act-1",
+      url: "https://example.com/video",
+    });
+    expect(getText(result)).toContain("VideoActivity 업데이트 완료");
+    expect(getText(result)).toContain("v1");
+
+    // 두 번째 request 호출이 PUT video_activities
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[0]).toBe("PUT");
+    expect(putCall[1]).toBe("/api/v1/video_activities/v1");
+    expect(putCall[2].json.data.attributes.url).toBe(
+      "https://example.com/video",
+    );
+  });
+
+  it("API 에러 처리", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "video_activity", id: "v1" },
+            },
+          },
+        },
+      })
+      .mockRejectedValueOnce(
+        new CodleAPIError(422, "Invalid video URL"),
+      );
+
+    const result = await toolHandlers.update_activitiable({
+      activity_id: "act-1",
+      url: "bad-url",
+    });
+    expect(getText(result)).toContain("VideoActivity 업데이트 실패");
+  });
+});
+
 describe("update_activitiable — 지원하지 않는 유형", () => {
   it("QuizActivity 등 미지원 유형은 에러", async () => {
     mockResolveActivitiable("quiz_activity", "q1");
