@@ -66,6 +66,12 @@ export function registerActivityTools(server: McpServer): void {
           "활동 깊이, 1-indexed (1=메인, 2=하위, 3=하위의 하위). create 시 미지정이면 1",
         ),
       tag_ids: z.array(z.string()).optional().describe("연결할 태그 ID 목록"),
+      entry_category: z
+        .enum(["project", "stage"])
+        .optional()
+        .describe(
+          "엔트리 활동 카테고리 (activity_type이 EntryActivity일 때 필수)",
+        ),
     },
     async ({
       action,
@@ -75,6 +81,7 @@ export function registerActivityTools(server: McpServer): void {
       activity_type,
       depth,
       tag_ids,
+      entry_category,
     }) => {
       if (action === "create") {
         if (!material_id || !name || !activity_type) {
@@ -100,11 +107,26 @@ export function registerActivityTools(server: McpServer): void {
           };
         }
 
+        if (activity_type === "EntryActivity" && !entry_category) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "EntryActivity 생성 시 entry_category(project 또는 stage)는 필수입니다.",
+              },
+            ],
+          };
+        }
+
         // 1단계: activitiable 생성
         const endpoint = ACTIVITIABLE_ENDPOINTS[activity_type];
         const jsonapiType = pascalToSnake(activity_type);
+        const activitiableAttrs: Record<string, unknown> = {};
+        if (activity_type === "EntryActivity" && entry_category) {
+          activitiableAttrs.category = entry_category;
+        }
         const activitiablePayload = {
-          data: { type: jsonapiType, attributes: {} },
+          data: { type: jsonapiType, attributes: activitiableAttrs },
         };
         let activitiableId: string;
         try {
