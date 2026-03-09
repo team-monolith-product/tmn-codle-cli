@@ -213,6 +213,31 @@ describe("update_activitiable", () => {
     expect(extractText(interaction!.result!)).toMatch(/업데이트 완료/);
   });
 
+  test("EmbeddedActivity URL 및 학습목표 설정", async ({ claude, factory }) => {
+    const material = await createMaterial(factory);
+
+    const result = await claude.run(
+      `자료 ID "${material.id}"에 외부URL 활동 "E2E Embed"를 만들고, ` +
+        `URL을 "https://example.com/embed"로, ` +
+        `학습목표를 "목표 1: 개념 이해", "목표 2: 실습"으로 설정해줘.`,
+    );
+
+    expect(result.toolNames).toContain("mcp__codle__update_activitiable");
+
+    const interaction = findToolResult(
+      result.toolInteractions,
+      "mcp__codle__update_activitiable",
+    );
+    expect(interaction?.result).toBeDefined();
+    expect(interaction!.result!.isError).toBe(false);
+    expect(extractText(interaction!.result!)).toMatch(/업데이트 완료/);
+
+    const input = interaction!.call.input;
+    expect(input.url).toBe("https://example.com/embed");
+    expect(input.goals).toBeDefined();
+    expect((input.goals as string[]).length).toBeGreaterThanOrEqual(2);
+  });
+
   test("활동지 설명 설정", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
 

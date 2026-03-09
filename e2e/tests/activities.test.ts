@@ -44,6 +44,38 @@ describe("manage_activities", () => {
   });
 });
 
+describe("set_activity_branch", () => {
+  test("갈림길 설정 (기본 + 보완)", async ({ claude, factory }) => {
+    const material = await createMaterial(factory);
+    const branch = await createActivity(factory, material.id, {
+      name: "Branch From",
+    });
+    const mid = await createActivity(factory, material.id, {
+      name: "Mid Path",
+    });
+    const low = await createActivity(factory, material.id, {
+      name: "Low Path",
+    });
+
+    const result = await claude.run(
+      `자료 ID "${material.id}"에서 활동 "${branch.id}"를 분기점으로 갈림길을 설정해줘. ` +
+        `기본 갈림길은 "${mid.id}", 보완 갈림길은 "${low.id}"야.`,
+    );
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.toolNames).toContain("mcp__codle__set_activity_branch");
+
+    const interaction = findToolResult(
+      result.toolInteractions,
+      "mcp__codle__set_activity_branch",
+    );
+    expect(interaction?.result).toBeDefined();
+    expect(interaction!.result!.isError).toBe(false);
+    const text = extractText(interaction!.result!);
+    expect(text).toMatch(/갈림길 설정 완료/);
+  });
+});
+
 describe("set_activity_flow", () => {
   test("seed된 활동으로 코스 흐름 설정", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
