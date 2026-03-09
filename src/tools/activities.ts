@@ -78,6 +78,12 @@ export function registerActivityTools(server: McpServer): void {
         .string()
         .optional()
         .describe("URL (VideoActivity, EmbeddedActivity 전용)"),
+      entry_category: z
+        .enum(["project", "mission", "stage"])
+        .optional()
+        .describe(
+          "엔트리 활동 카테고리 (activity_type이 EntryActivity일 때만 유효). 미지정 시 project",
+        ),
     },
     async ({
       action,
@@ -88,6 +94,7 @@ export function registerActivityTools(server: McpServer): void {
       depth,
       tag_ids,
       url,
+      entry_category,
     }) => {
       if (action === "create") {
         if (!material_id || !name || !activity_type) {
@@ -124,6 +131,9 @@ export function registerActivityTools(server: McpServer): void {
             resolvedType === "EmbeddedActivity")
         ) {
           activitiableAttrs.url = url;
+        }
+        if (resolvedType === "EntryActivity" && entry_category) {
+          activitiableAttrs.category = entry_category;
         }
         const activitiablePayload = {
           data: { type: jsonapiType, attributes: activitiableAttrs },
