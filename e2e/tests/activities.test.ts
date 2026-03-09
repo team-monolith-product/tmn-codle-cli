@@ -69,8 +69,13 @@ describe("manage_activities", () => {
 describe("set_activity_branch", () => {
   test("갈림길 설정 (기본 + 보완)", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
+    // AIDEV-NOTE: enable_course_branch?는 QuizActivity/SheetActivity만 허용.
+    // 기본 activity factory는 StudioActivity이므로 quiz_activity를 명시적으로 생성.
+    const quizActivitiable = await factory.create("quiz_activity");
     const branch = await createActivity(factory, material.id, {
       name: "Branch From",
+      activitiableType: "QuizActivity",
+      activitiableId: quizActivitiable.id,
     });
     const mid = await createActivity(factory, material.id, {
       name: "Mid Path",
