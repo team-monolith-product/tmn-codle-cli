@@ -46,7 +46,7 @@ async function resolveActivitiable(
 export function registerActivitiableTools(server: McpServer): void {
   server.tool(
     "update_activitiable",
-    "활동의 activitiable 속성을 업데이트. Board(content,name), Sheet(content→description), Embedded(url,goals) 지원. type은 자동 감지.",
+    "활동의 activitiable 속성을 업데이트. Board(content,name), Sheet(content→description), Embedded(url,goals), Video(url) 지원. type은 자동 감지.",
     {
       activity_id: z.string().describe("활동 ID"),
       content: z
@@ -59,7 +59,7 @@ export function registerActivitiableTools(server: McpServer): void {
       url: z
         .string()
         .optional()
-        .describe("외부 URL. EmbeddedActivity에만 적용"),
+        .describe("외부 URL. Embedded/VideoActivity에 적용"),
       goals: z
         .array(z.string())
         .optional()
@@ -256,6 +256,50 @@ export function registerActivitiableTools(server: McpServer): void {
                 {
                   type: "text" as const,
                   text: `EmbeddedActivity 업데이트 실패: ${e.detail}`,
+                },
+              ],
+            };
+          }
+          throw e;
+        }
+      }
+
+      if (info.type === "VideoActivity") {
+        if (url === undefined) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: "VideoActivity: url은 필수입니다.",
+              },
+            ],
+          };
+        }
+
+        const payload = buildJsonApiPayload(
+          "video_activities",
+          { url },
+          info.id,
+        );
+        try {
+          await client.request("PUT", `/api/v1/video_activities/${info.id}`, {
+            json: payload,
+          });
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `VideoActivity 업데이트 완료: [${info.id}] (activity=${activity_id})`,
+              },
+            ],
+          };
+        } catch (e) {
+          if (e instanceof CodleAPIError) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `VideoActivity 업데이트 실패: ${e.detail}`,
                 },
               ],
             };

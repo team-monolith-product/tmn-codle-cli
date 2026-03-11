@@ -7,7 +7,7 @@ describe("search_materials", () => {
     const uniqueName = `e2e-mine-${Date.now()}`;
     await createMaterial(factory, { name: uniqueName });
 
-    const result = await claude.run("내 자료 목록을 보여줘.");
+    const result = await claude.run(`내 자료 중 "${uniqueName}"을 검색해줘.`);
 
     expect(result.errors).toHaveLength(0);
     expect(result.toolNames).toContain("mcp__codle__search_materials");
@@ -69,6 +69,28 @@ describe("get_material_detail", () => {
 });
 
 describe("manage_materials", () => {
+  test("자료 생성 시 본문(markdown) 포함", async ({ claude }) => {
+    const materialName = `E2E Body ${Date.now()}`;
+    const result = await claude.run(
+      `"${materialName}" 이름으로 새 자료를 만들어줘. 본문은 "# 학습 안내\n이 자료는 AI 기초를 다룹니다."로 해줘.`,
+    );
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.toolNames).toContain("mcp__codle__manage_materials");
+
+    const interaction = findToolResult(
+      result.toolInteractions,
+      "mcp__codle__manage_materials",
+    );
+    expect(interaction?.result).toBeDefined();
+    expect(interaction!.result!.isError).toBe(false);
+    expect(extractText(interaction!.result!)).toMatch(/자료 생성 완료/);
+
+    const input = interaction!.call.input;
+    expect(input.body).toBeDefined();
+    expect(input.body as string).toContain("학습 안내");
+  });
+
   test("자료 생성 성공", async ({ claude }) => {
     const materialName = `E2E Test ${Date.now()}`;
     const result = await claude.run(

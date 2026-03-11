@@ -213,6 +213,52 @@ describe("update_activitiable", () => {
     expect(extractText(interaction!.result!)).toMatch(/업데이트 완료/);
   });
 
+  test("EmbeddedActivity URL 및 학습목표 설정", async ({ claude, factory }) => {
+    const material = await createMaterial(factory);
+
+    const result = await claude.run(
+      `자료 ID "${material.id}"에 외부URL 활동 "E2E Embed"를 만들고, ` +
+        `URL을 "https://example.com/embed"로, ` +
+        `학습목표를 "목표 1: 개념 이해", "목표 2: 실습"으로 설정해줘.`,
+    );
+
+    // url은 manage_activities 또는 update_activitiable 어디서든 전달 가능
+    const activitiableInteractions = findAllToolResults(
+      result.toolInteractions,
+      "mcp__codle__update_activitiable",
+    );
+    const activityInteractions = findAllToolResults(
+      result.toolInteractions,
+      "mcp__codle__manage_activities",
+    );
+    const allInteractions = [
+      ...activitiableInteractions,
+      ...activityInteractions,
+    ];
+
+    // url이 어딘가에서 전달됐는지 확인
+    const urlPassed = allInteractions.some(
+      (i) => i.call.input.url === "https://example.com/embed",
+    );
+    expect(urlPassed).toBe(true);
+
+    // goals는 update_activitiable에서 전달돼야 함
+    const goalsInteraction = activitiableInteractions.find(
+      (i) => i.call.input.goals,
+    );
+    expect(goalsInteraction).toBeDefined();
+    expect(
+      (goalsInteraction!.call.input.goals as string[]).length,
+    ).toBeGreaterThanOrEqual(2);
+
+    // 최종 결과에 에러 없어야 함
+    const lastActivitiable =
+      activitiableInteractions[activitiableInteractions.length - 1];
+    expect(lastActivitiable?.result).toBeDefined();
+    expect(lastActivitiable!.result!.isError).toBe(false);
+    expect(extractText(lastActivitiable!.result!)).toMatch(/업데이트 완료/);
+  });
+
   test("활동지 설명 설정", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
 

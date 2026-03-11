@@ -47,7 +47,7 @@ export function pascalToSnake(name: string): string {
 export function registerActivityTools(server: McpServer): void {
   server.tool(
     "manage_activities",
-    "활동(Activity) CRUD. Quiz/Sheet는 생성 후 manage_problem_collection_problems로 문제 연결.",
+    "활동(Activity) CRUD. 유형별 속성(url, content 등)은 update_activitiable 사용.",
     {
       action: z
         .enum(["create", "update", "delete", "duplicate"])
@@ -74,10 +74,12 @@ export function registerActivityTools(server: McpServer): void {
           "활동 깊이, 1-indexed (1=메인, 2=하위, 3=하위의 하위). create 시 미지정이면 1",
         ),
       tag_ids: z.array(z.string()).optional().describe("연결할 태그 ID 목록"),
-      url: z
-        .string()
+      entry_category: z
+        .enum(["project", "stage"])
         .optional()
-        .describe("URL (VideoActivity, EmbeddedActivity 전용)"),
+        .describe(
+          "엔트리 활동 카테고리 (activity_type이 EntryActivity일 때 필수)",
+        ),
     },
     async ({
       action,
@@ -87,7 +89,7 @@ export function registerActivityTools(server: McpServer): void {
       activity_type,
       depth,
       tag_ids,
-      url,
+      entry_category,
     }) => {
       if (action === "create") {
         if (!material_id || !name || !activity_type) {
@@ -114,16 +116,25 @@ export function registerActivityTools(server: McpServer): void {
           };
         }
 
+        if (resolvedType === "EntryActivity" && !entry_category) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "EntryActivity 생성 시 entry_category(project 또는 stage)는 필수입니다.",
+              },
+            ],
+          };
+        }
+
         // 1단계: activitiable 생성
         const endpoint = ACTIVITIABLE_ENDPOINTS[resolvedType];
         const jsonapiType = pascalToSnake(resolvedType);
         const activitiableAttrs: Record<string, unknown> = {};
-        if (
-          url !== undefined &&
-          (resolvedType === "VideoActivity" ||
-            resolvedType === "EmbeddedActivity")
-        ) {
-          activitiableAttrs.url = url;
+        // AIDEV-NOTE: entry_category는 Rails EntryActivity에 validates_immutable :category가 있어
+        // 생성 후 변경 불가. 따라서 create 시에만 설정하며, update_activitiable로 이관하지 않는다.
+        if (resolvedType === "EntryActivity" && entry_category) {
+          activitiableAttrs.category = entry_category;
         }
         const activitiablePayload = {
           data: { type: jsonapiType, attributes: activitiableAttrs },
@@ -205,53 +216,18 @@ export function registerActivityTools(server: McpServer): void {
         if (depth !== undefined) attrs.depth = Math.max(0, depth - 1);
         if (tag_ids !== undefined) attrs.tag_ids = tag_ids;
 
-        if (!Object.keys(attrs).length && url === undefined) {
+        if (!Object.keys(attrs).length) {
           return {
             content: [{ type: "text", text: "수정할 항목이 없습니다." }],
           };
         }
 
-        let activity: Record<string, unknown> = {};
-        if (Object.keys(attrs).length) {
-          const payload = buildJsonApiPayload("activities", attrs, activity_id);
-          const response = await client.updateActivity(
-            activity_id,
-            payload as Record<string, unknown>,
-          );
-          activity = extractSingle(response);
-        }
-
-        // AIDEV-NOTE: url 수정 시 activity의 activitiable을 조회하여 해당 리소스를 업데이트한다.
-        if (url !== undefined) {
-          const actResp = await client.request(
-            "GET",
-            `/api/v1/activities/${activity_id}`,
-          );
-          const actData = (actResp.data as Record<string, unknown>) || {};
-          const actAttrs =
-            (actData.attributes as Record<string, unknown>) || {};
-          const aType = String(actAttrs.activitiable_type || "");
-          const aId = String(actAttrs.activitiable_id || "");
-          if (
-            aId &&
-            (aType === "VideoActivity" || aType === "EmbeddedActivity")
-          ) {
-            const endpoint = ACTIVITIABLE_ENDPOINTS[aType];
-            const jsonapiType = pascalToSnake(aType);
-            await client.request("PUT", `${endpoint}/${aId}`, {
-              json: {
-                data: {
-                  id: aId,
-                  type: jsonapiType,
-                  attributes: { url },
-                },
-              },
-            });
-          }
-          if (!Object.keys(activity).length) {
-            activity = { id: activity_id, name: actAttrs.name };
-          }
-        }
+        const payload = buildJsonApiPayload("activities", attrs, activity_id);
+        const response = await client.updateActivity(
+          activity_id,
+          payload as Record<string, unknown>,
+        );
+        const activity = extractSingle(response);
 
         return {
           content: [

@@ -10,6 +10,7 @@ vi.mock("../src/api/client.js", () => {
     updateProblem: vi.fn(),
     deleteProblem: vi.fn(),
     doManyPCP: vi.fn(),
+    doManyProblemAnswers: vi.fn(),
     listBoards: vi.fn(),
     updateBoard: vi.fn(),
     updateSheetActivity: vi.fn(),
@@ -190,6 +191,22 @@ describe("manage_problems update", () => {
     });
     expect(getText(result)).toContain("문제 수정 완료");
   });
+
+  it("sample_answer만 수정 시 early return 안 됨", async () => {
+    mockClient.request.mockResolvedValueOnce({
+      data: { id: "10", attributes: { title: "기존 제목" } },
+    });
+    mockClient.request.mockResolvedValueOnce({ data: [] });
+    mockClient.doManyProblemAnswers.mockResolvedValue({});
+
+    const result = await toolHandlers.manage_problems({
+      action: "update",
+      problem_id: "10",
+      sample_answer: "print('hello')",
+    });
+    expect(getText(result)).toContain("문제 수정 완료");
+    expect(getText(result)).not.toContain("수정할 항목이 없습니다");
+  });
 });
 
 describe("manage_problems delete", () => {
@@ -220,7 +237,6 @@ describe("manage_problems delete", () => {
     expect(getText(result)).toContain("문제 삭제 실패");
   });
 });
-
 
 // ===== manage_problem_collection_problems =====
 
@@ -403,11 +419,7 @@ describe("manage_problem_collection_problems set", () => {
 
     const result = await toolHandlers.manage_problem_collection_problems({
       activity_id: "1",
-      problems: [
-        { id: "p1", point: 2 },
-        { id: "p2", point: 0 },
-        { id: "p3" },
-      ],
+      problems: [{ id: "p1", point: 2 }, { id: "p2", point: 0 }, { id: "p3" }],
     });
     expect(getText(result)).toContain("추가 3");
 
@@ -667,12 +679,12 @@ describe("update_activitiable — EmbeddedActivity", () => {
 describe("update_activitiable — unsupported type", () => {
   it("returns error for unsupported type", async () => {
     mockClient.request.mockResolvedValue(
-      makeActivitiableResponse("va1", "video_activity"),
+      makeActivitiableResponse("qa1", "quiz_activity"),
     );
 
     const result = await toolHandlers.update_activitiable({
       activity_id: "1",
-      url: "https://example.com",
+      content: "test",
     });
     expect(getText(result)).toContain("지원하지 않는 유형");
   });
