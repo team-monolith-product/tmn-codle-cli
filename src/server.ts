@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAllTools } from "./tools/register.js";
+import { registerAllResources } from "./resources/register.js";
 
 const SERVER_INFO = {
   name: "Codle",
@@ -19,11 +20,12 @@ const SERVER_OPTIONS = {
 | 갈림길 | ActivityTransition (with level) |
 | 코스 흐름 | ActivityTransition (linear) |
 
-활동 유형: 퀴즈=QuizActivity, 교안=HtmlActivity, 코딩=StudioActivity, 보드=BoardActivity, 활동지=SheetActivity, 영상=VideoActivity, 엔트리=EntryActivity, 스크래치=ScratchActivity, PDF=PdfActivity`,
+활동 유형 (Activity 접미사 생략 가능): 퀴즈=Quiz, 교안=Html, 생성형교안=GenerativeHtml, 코딩=Studio, 보드=Board, 활동지=Sheet, 영상=Video, 엔트리=Entry, 스크래치=Scratch, PDF=Pdf, 외부URL=Embedded, 메이크코드=Makecode, 코댑=Codap, 소크룸=Socroom`,
 };
 
 export function createServer(): McpServer {
   const server = new McpServer(SERVER_INFO, SERVER_OPTIONS);
   registerAllTools(server);
+  registerAllResources(server);
   return server;
 }

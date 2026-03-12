@@ -123,7 +123,17 @@ export function parseNdjson(
     };
   });
 
-  const errors = toolResults.filter((r) => r.isError).map((r) => r.content);
+  // AIDEV-NOTE: mcp__codle__* 도구 에러만 수집한다.
+  // ReadMcpResourceTool 등 Claude Code 플랫폼 도구의 에러(예: server 파라미터 누락)는
+  // 우리 코드와 무관하므로 제외한다.
+  const codleToolUseIds = new Set(
+    toolCalls
+      .filter((tc) => tc.name.startsWith("mcp__codle__"))
+      .map((tc) => tc.id),
+  );
+  const errors = toolResults
+    .filter((r) => r.isError && codleToolUseIds.has(r.toolUseId))
+    .map((r) => r.content);
 
   // call ↔ result 매칭
   const resultMap = new Map(toolResults.map((r) => [r.toolUseId, r]));

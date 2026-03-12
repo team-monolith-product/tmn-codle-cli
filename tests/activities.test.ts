@@ -169,6 +169,47 @@ describe("manage_activities create", () => {
     expect(callArgs.data.attributes.depth).toBe(0);
   });
 
+  it("short activity type (Quiz → QuizActivity)", async () => {
+    mockClient.request.mockResolvedValue(
+      makeJsonApiResponse("quiz_activity", "99", {}),
+    );
+    mockClient.createActivity.mockResolvedValue(
+      makeJsonApiResponse("activity", "100", {
+        name: "축약테스트",
+        depth: 0,
+        material_id: "1",
+      }),
+    );
+
+    const result = await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "축약테스트",
+      activity_type: "Quiz",
+      depth: 1,
+    });
+
+    expect(getText(result)).toContain("생성 완료");
+    expect(mockClient.request).toHaveBeenCalledWith(
+      "POST",
+      "/api/v1/quiz_activities",
+      { json: { data: { type: "quiz_activity", attributes: {} } } },
+    );
+    const callArgs = mockClient.createActivity.mock.calls[0][0];
+    expect(callArgs.data.attributes.activitiable_type).toBe("QuizActivity");
+  });
+
+  it("unknown short type rejected", async () => {
+    const result = await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "test",
+      activity_type: "Unknown",
+      depth: 1,
+    });
+    expect(getText(result)).toContain("유효하지 않은 activity_type");
+  });
+
   it("passes entry_category to activitiable attributes for EntryActivity", async () => {
     mockClient.request.mockResolvedValue(
       makeJsonApiResponse("entry_activity", "88", { category: "stage" }),
@@ -239,6 +280,18 @@ describe("manage_activities create", () => {
       material_id: "1",
       name: "엔트리기본",
       activity_type: "EntryActivity",
+    });
+
+    expect(getText(result)).toContain("entry_category");
+    expect(mockClient.request).not.toHaveBeenCalled();
+  });
+
+  it("returns error when entry_category omitted for short Entry type", async () => {
+    const result = await toolHandlers.manage_activities({
+      action: "create",
+      material_id: "1",
+      name: "엔트리축약",
+      activity_type: "Entry",
     });
 
     expect(getText(result)).toContain("entry_category");

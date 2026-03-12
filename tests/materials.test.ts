@@ -221,6 +221,29 @@ describe("manage_materials", () => {
     expect(getText(result)).toContain("새 자료");
   });
 
+  it("create with body (markdown → Lexical 변환)", async () => {
+    mockClient.createMaterial.mockResolvedValue(
+      makeJsonApiResponse("material", "1", { name: "본문 자료" }),
+    );
+
+    const result = await toolHandlers.manage_materials({
+      action: "create",
+      name: "본문 자료",
+      body: "본문 내용",
+    });
+    expect(getText(result)).toContain("자료 생성 완료");
+
+    const payload = mockClient.createMaterial.mock.calls[0][0];
+    const body = payload.data.attributes.body;
+    expect(body.root).toBeDefined();
+    expect(body.root.type).toBe("root");
+    // Lexical로 변환되어 paragraph > text 구조가 됨
+    const paragraph = body.root.children[0];
+    expect(paragraph.type).toBe("paragraph");
+    const textNode = paragraph.children[0];
+    expect(textNode.text).toBe("본문 내용");
+  });
+
   it("create without name", async () => {
     const result = await toolHandlers.manage_materials({
       action: "create",
@@ -239,6 +262,24 @@ describe("manage_materials", () => {
       name: "수정됨",
     });
     expect(getText(result)).toContain("자료 수정 완료");
+  });
+
+  it("update with body (markdown → Lexical 변환)", async () => {
+    mockClient.updateMaterial.mockResolvedValue(
+      makeJsonApiResponse("material", "1", { name: "기존 자료" }),
+    );
+
+    const result = await toolHandlers.manage_materials({
+      action: "update",
+      material_id: "1",
+      body: "수정된 본문",
+    });
+    expect(getText(result)).toContain("자료 수정 완료");
+
+    const payload = mockClient.updateMaterial.mock.calls[0][1];
+    const body = payload.data.attributes.body;
+    expect(body.root).toBeDefined();
+    expect(body.root.type).toBe("root");
   });
 
   it("update without material_id", async () => {
