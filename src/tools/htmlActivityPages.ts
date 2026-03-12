@@ -14,9 +14,7 @@ interface ExistingPage {
   completion_seconds: number | null;
 }
 
-async function resolveHtmlActivityId(
-  activityId: string,
-): Promise<string> {
+async function resolveHtmlActivityId(activityId: string): Promise<string> {
   const resp = await client.request("GET", `/api/v1/activities/${activityId}`, {
     params: { include: "activitiable" },
   });
@@ -59,7 +57,13 @@ async function getExistingPages(
   );
 
   const pages = extractIncluded(
-    resp as { included?: Array<{ type?: string; id?: string; attributes?: Record<string, unknown> }> },
+    resp as {
+      included?: Array<{
+        type?: string;
+        id?: string;
+        attributes?: Record<string, unknown>;
+      }>;
+    },
     "html_activity_page",
   );
 
@@ -164,7 +168,10 @@ export function registerHtmlActivityPageTools(server: McpServer): void {
           if (existing.position !== i) attrs.position = i;
           if (desired.width !== undefined && existing.width !== desired.width)
             attrs.width = desired.width;
-          if (desired.height !== undefined && existing.height !== desired.height)
+          if (
+            desired.height !== undefined &&
+            existing.height !== desired.height
+          )
             attrs.height = desired.height;
           if (existing.progress_calculation_method !== desiredMethod)
             attrs.progress_calculation_method = desiredMethod;
@@ -210,17 +217,13 @@ export function registerHtmlActivityPageTools(server: McpServer): void {
       }
 
       try {
-        await client.request(
-          "POST",
-          "/api/v1/html_activity_pages/do_many",
-          {
-            json: {
-              data_to_create: dataToCreate,
-              data_to_update: dataToUpdate,
-              data_to_destroy: dataToDestroy,
-            },
+        await client.request("POST", "/api/v1/html_activity_pages/do_many", {
+          json: {
+            data_to_create: dataToCreate,
+            data_to_update: dataToUpdate,
+            data_to_destroy: dataToDestroy,
           },
-        );
+        });
       } catch (e) {
         if (e instanceof CodleAPIError) {
           return {
@@ -243,7 +246,9 @@ export function registerHtmlActivityPageTools(server: McpServer): void {
         content: [
           {
             type: "text" as const,
-            text: `교안 페이지 설정 완료 (${parts.join(", ")}). 최종 페이지 수: ${pages.length}`,
+            text: `교안 페이지 설정 완료 (${parts.join(
+              ", ",
+            )}). 최종 페이지 수: ${pages.length}`,
           },
         ],
       };

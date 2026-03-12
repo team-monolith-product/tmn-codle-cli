@@ -169,9 +169,9 @@ describe("manage_html_activity_pages — 페이지 생성", () => {
     });
 
     const payload = mockClient.request.mock.calls[2][2].json;
-    expect(payload.data_to_create[0].attributes.progress_calculation_method).toBe(
-      "no_calculation",
-    );
+    expect(
+      payload.data_to_create[0].attributes.progress_calculation_method,
+    ).toBe("no_calculation");
   });
 });
 
