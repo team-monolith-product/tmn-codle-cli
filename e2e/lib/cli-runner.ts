@@ -1,15 +1,20 @@
 import { spawn } from "node:child_process";
-import { parseNdjson, type ClaudeResult, type UsageStats } from "./ndjson.js";
+import { resolve } from "node:path";
+import {
+  parseNdjson,
+  type ClaudeResult,
+  type UsageStats,
+} from "./ndjson.js";
 
-interface ClaudeRunnerOptions {
-  mcpConfigPath: string;
+interface CliRunnerOptions {
   projectDir: string;
+  accessToken: string;
   maxBudgetUsd: string;
 }
 
-export class ClaudeRunner {
-  private mcpConfigPath: string;
+export class CliRunner {
   private projectDir: string;
+  private accessToken: string;
   private maxBudgetUsd: string;
   lastPrompt = "";
   lastResult: ClaudeResult | undefined;
@@ -24,9 +29,9 @@ export class ClaudeRunner {
     cacheCreationInputTokens: 0,
   };
 
-  constructor(opts: ClaudeRunnerOptions) {
-    this.mcpConfigPath = opts.mcpConfigPath;
+  constructor(opts: CliRunnerOptions) {
     this.projectDir = opts.projectDir;
+    this.accessToken = opts.accessToken;
     this.maxBudgetUsd = opts.maxBudgetUsd;
   }
 
@@ -36,6 +41,17 @@ export class ClaudeRunner {
   ): Promise<ClaudeResult> {
     this.lastPrompt = prompt;
     const timeout = opts?.timeout ?? 120_000;
+    const binPath = resolve(this.projectDir, "bin", "run.js");
+
+    const systemPrompt = [
+      "You have access to a CLI tool called `codle`.",
+      `The binary is at: ${binPath}`,
+      `Use --token ${this.accessToken} for authentication.`,
+      "Run `node ${binPath} --help` to discover available commands.",
+      "Run `node ${binPath} <topic> --help` to see subcommands.",
+      "Run `node ${binPath} <topic> <command> --help` to see command flags.",
+      "Always use `node ${binPath}` to invoke the CLI.",
+    ].join("\n");
 
     return new Promise<ClaudeResult>((resolve, reject) => {
       const child = spawn(
@@ -46,11 +62,10 @@ export class ClaudeRunner {
           "--output-format",
           "stream-json",
           "--verbose",
-          "--mcp-config",
-          this.mcpConfigPath,
-          "--strict-mcp-config",
+          "--system-prompt",
+          systemPrompt,
           "--allowed-tools",
-          "mcp__codle__*",
+          "Bash",
           "--max-budget-usd",
           this.maxBudgetUsd,
           "--no-session-persistence",

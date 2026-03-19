@@ -74,6 +74,31 @@ export function extractText(result: ToolResult): string {
   return content;
 }
 
+/**
+ * Bash tool call 중 codle CLI 호출을 추출한다.
+ * 마지막 codle 호출이 "최종 커맨드"로 간주된다.
+ */
+export function findCodleBashCalls(
+  interactions: ToolInteraction[],
+): ToolInteraction[] {
+  return interactions.filter(
+    (i) =>
+      i.call.name === "Bash" &&
+      typeof i.call.input.command === "string" &&
+      /\brun\.js\b/.test(i.call.input.command) &&
+      !/--help/.test(i.call.input.command),
+  );
+}
+
+/** 마지막 codle CLI 실행(--help 제외)의 command 문자열을 반환한다. */
+export function findLastCodleCommand(
+  interactions: ToolInteraction[],
+): string | undefined {
+  const calls = findCodleBashCalls(interactions);
+  if (!calls.length) return undefined;
+  return calls[calls.length - 1].call.input.command as string;
+}
+
 export function parseNdjson(
   raw: string,
   exitCode: number,
