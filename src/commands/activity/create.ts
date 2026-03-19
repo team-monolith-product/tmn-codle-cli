@@ -49,8 +49,7 @@ export default class ActivityCreate extends BaseCommand {
     }),
     "activity-type": Flags.string({
       required: true,
-      description:
-        "활동 유형. Html, Quiz, Board, Sheet, Video, Embedded 등",
+      description: "활동 유형. Html, Quiz, Board, Sheet, Video, Embedded 등",
     }),
     depth: Flags.integer({
       description: "활동 깊이, 1-indexed (1=메인, 2=하위). 미지정 시 1",
@@ -71,7 +70,9 @@ export default class ActivityCreate extends BaseCommand {
 
     if (!ACTIVITIABLE_TYPES.includes(resolvedType)) {
       this.error(
-        `유효하지 않은 activity_type: ${flags["activity-type"]}. 사용 가능: ${ACTIVITIABLE_TYPES.join(", ")}`,
+        `유효하지 않은 activity_type: ${
+          flags["activity-type"]
+        }. 사용 가능: ${ACTIVITIABLE_TYPES.join(", ")}`,
         { exit: 1 },
       );
     }
@@ -100,26 +101,22 @@ export default class ActivityCreate extends BaseCommand {
 
     let activitiableId: string;
     try {
-      const activitiableResponse = await this.client.request(
-        "POST",
-        endpoint,
-        { json: activitiablePayload },
-      );
+      const activitiableResponse = await this.client.request("POST", endpoint, {
+        json: activitiablePayload,
+      });
       const activitiableData =
         (activitiableResponse.data as Record<string, unknown>) || {};
       activitiableId = String(activitiableData.id || "");
       if (!activitiableId) {
-        this.error(
-          `activitiable(${resolvedType}) 생성 실패: 응답에 id 없음.`,
-          { exit: 1 },
-        );
+        this.error(`activitiable(${resolvedType}) 생성 실패: 응답에 id 없음.`, {
+          exit: 1,
+        });
       }
     } catch (e) {
       if (e instanceof CodleAPIError) {
-        this.error(
-          `activitiable(${resolvedType}) 생성 실패: ${e.detail}`,
-          { exit: 1 },
-        );
+        this.error(`activitiable(${resolvedType}) 생성 실패: ${e.detail}`, {
+          exit: 1,
+        });
       }
       throw e;
     }
