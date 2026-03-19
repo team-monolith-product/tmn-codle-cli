@@ -10,9 +10,7 @@ describe("cli: material search", () => {
     const uniqueName = `e2e-cli-${Date.now()}`;
     await createMaterial(factory, { name: uniqueName });
 
-    const result = await cli.run(
-      `내 자료 중 "${uniqueName}"을 검색해줘.`,
-    );
+    const result = await cli.run(`내 자료 중 "${uniqueName}"을 검색해줘.`);
 
     const cmd = findLastCodleCommand(result.toolInteractions);
     expect(cmd).toBeDefined();

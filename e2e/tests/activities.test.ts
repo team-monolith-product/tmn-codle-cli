@@ -24,9 +24,7 @@ describe("cli: activity delete", () => {
     const material = await createMaterial(factory);
     const activity = await createActivity(factory, material.id);
 
-    const result = await cli.run(
-      `활동 ID "${activity.id}"를 삭제해줘.`,
-    );
+    const result = await cli.run(`활동 ID "${activity.id}"를 삭제해줘.`);
 
     const cmd = findLastCodleCommand(result.toolInteractions);
     expect(cmd).toBeDefined();
