@@ -1,17 +1,18 @@
 import { config } from "../config.js";
-import { getAccessToken } from "../context.js";
 import { logger } from "../logger.js";
 import { CodleAPIError, extractErrorDetail } from "./errors.js";
 
 export class CodleClient {
   private baseUrl: string;
+  private accessToken?: string;
 
-  constructor() {
-    this.baseUrl = config.apiUrl;
+  constructor(accessToken?: string, apiUrl?: string) {
+    this.accessToken = accessToken;
+    this.baseUrl = apiUrl ?? config.apiUrl;
   }
 
   private getToken(): string | undefined {
-    return getAccessToken();
+    return this.accessToken;
   }
 
   private authHeaders(): Record<string, string> {
@@ -290,4 +291,6 @@ export class CodleClient {
   }
 }
 
+// AIDEV-NOTE: 기존 tool 파일들이 `import { client } from "../api/client.js"` 로 싱글톤을 사용중.
+// CLI 전환 완료 전까지 호환성을 위해 유지. 토큰 없이 생성되므로 ensureAuth()에서 실패함.
 export const client = new CodleClient();
