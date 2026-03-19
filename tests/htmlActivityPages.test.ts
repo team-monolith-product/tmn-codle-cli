@@ -10,11 +10,8 @@ vi.mock("../src/api/client.js", () => {
   return { CodleClient: vi.fn(() => mockClient), _mockClient: mockClient };
 });
 
-const { _mockClient } = await import("../src/api/client.js") as any;
-const mockClient = _mockClient as Record<
-  string,
-  ReturnType<typeof vi.fn>
->;
+const { _mockClient } = (await import("../src/api/client.js")) as any;
+const mockClient = _mockClient as Record<string, ReturnType<typeof vi.fn>>;
 
 import { manageHtmlActivityPages } from "../src/services/htmlActivityPage.service.js";
 

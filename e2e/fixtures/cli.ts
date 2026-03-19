@@ -5,11 +5,7 @@ import { CliRunner } from "../lib/cli-runner.js";
 import { TestFactory } from "../lib/factory.js";
 import { writeTestLog } from "../lib/log-writer.js";
 
-const CONFIG_PATH = resolve(
-  import.meta.dirname,
-  "..",
-  ".mcp-config.tmp.json",
-);
+const CONFIG_PATH = resolve(import.meta.dirname, "..", ".mcp-config.tmp.json");
 const PROJECT_DIR = resolve(import.meta.dirname, "..", "..");
 
 function readAccessToken(): string {
@@ -47,8 +43,7 @@ export const test = base.extend<{
     task.meta.inputTokens =
       ((task.meta.inputTokens as number) ?? 0) + runner.lastUsage.inputTokens;
     task.meta.outputTokens =
-      ((task.meta.outputTokens as number) ?? 0) +
-      runner.lastUsage.outputTokens;
+      ((task.meta.outputTokens as number) ?? 0) + runner.lastUsage.outputTokens;
   },
   factory: async ({}, use) => {
     await use(new TestFactory());
