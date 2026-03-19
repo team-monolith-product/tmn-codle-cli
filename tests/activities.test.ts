@@ -353,10 +353,7 @@ describe("activity update", () => {
 describe("activity delete", () => {
   it("successful delete", async () => {
     mockClient.deleteActivity.mockResolvedValue({});
-    const output = await runCommand(ActivityDelete, [
-      "--activity-id",
-      "1",
-    ]);
+    const output = await runCommand(ActivityDelete, ["--activity-id", "1"]);
     expect(output).toContain("삭제 완료");
   });
 

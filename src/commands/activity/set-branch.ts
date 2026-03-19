@@ -47,9 +47,7 @@ export default class ActivitySetBranch extends BaseCommand {
     const dataToDestroy: { id: string }[] = [];
     for (const t of existingTransitions) {
       const attrs = (t.attributes as Record<string, unknown>) || {};
-      if (
-        String(attrs.before_activity_id) === String(flags["branch-from"])
-      ) {
+      if (String(attrs.before_activity_id) === String(flags["branch-from"])) {
         dataToDestroy.push({ id: String(t.id) });
       }
     }
@@ -95,7 +93,9 @@ export default class ActivitySetBranch extends BaseCommand {
       ? `, 기존 transition ${dataToDestroy.length}개 제거`
       : "";
     this.log(
-      `갈림길 설정 완료: ${flags["branch-from"]} → ${levelsCreated.join(", ")}${destroyedMsg}`,
+      `갈림길 설정 완료: ${flags["branch-from"]} → ${levelsCreated.join(
+        ", ",
+      )}${destroyedMsg}`,
     );
   }
 }
