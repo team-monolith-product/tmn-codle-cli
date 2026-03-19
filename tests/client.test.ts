@@ -72,9 +72,7 @@ describe("CodleClient", () => {
     const { CodleClient } = await import("../src/api/client.js");
     const client = new CodleClient("expired-token");
 
-    await expect(
-      client.request("GET", "/api/v1/materials"),
-    ).rejects.toThrow();
+    await expect(client.request("GET", "/api/v1/materials")).rejects.toThrow();
 
     // Should only call the materials endpoint once (no retry)
     expect(callCount).toBe(1);
