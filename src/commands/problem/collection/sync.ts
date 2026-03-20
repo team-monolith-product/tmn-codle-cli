@@ -19,7 +19,9 @@ async function getActivityPcpState(
   client: CodleClient,
   activityId: string,
 ): Promise<ActivityPcpState> {
-  // AIDEV-NOTE: serializer가 lazy_load_data: true이므로 include 파라미터가 있어야 relationship data가 채워진다.
+  // AIDEV-NOTE: Activity → ProblemCollection ID + 기존 PCP 목록을 조회하는 헬퍼.
+  // serializer가 lazy_load_data: true이므로 include 파라미터가 있어야 relationship data가 채워진다.
+  // controller의 jsonapi_include 화이트리스트는 "problem_collections.pcps"이므로 정확히 맞춰야 한다.
   const actResp = await client.request(
     "GET",
     `/api/v1/activities/${activityId}`,

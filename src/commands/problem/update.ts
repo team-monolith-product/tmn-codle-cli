@@ -105,7 +105,8 @@ export default class ProblemUpdate extends BaseCommand {
       };
     }
 
-    // AIDEV-NOTE: update 시에도 ProblemAnswer/DescriptiveCriterium을 upsert.
+    // AIDEV-NOTE: update 시에도 ProblemAnswer/DescriptiveCriterium을 upsert한다.
+    // 기존 리소스가 있으면 update, 없으면 create.
     const warnings: string[] = [];
     if (flags["sample-answer"] !== undefined) {
       try {

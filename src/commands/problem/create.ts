@@ -57,6 +57,7 @@ export default class ProblemCreate extends BaseCommand {
       blocks = buildInputBlock(flags.solutions, inputOptions, flags.content);
     } else if (flags.content !== undefined) {
       // AIDEV-NOTE: Rails Problem 모델은 모든 타입에서 blocks presence를 요구한다.
+      // sheet/descriptive 타입은 choices/solutions가 없으므로 content를 Lexical로 변환하여 blocks에 넣는다.
       blocks = convertFromMarkdown(flags.content);
     }
 

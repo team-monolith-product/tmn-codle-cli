@@ -19,15 +19,6 @@ export class CodleClient {
     return { Authorization: `Bearer ${this.getToken()}` };
   }
 
-  async ensureAuth(): Promise<void> {
-    if (!this.getToken()) {
-      throw new CodleAPIError(
-        401,
-        "Authorization 헤더에 Bearer 토큰이 필요합니다.",
-      );
-    }
-  }
-
   static extractErrorDetailStatic(
     statusCode: number,
     contentType: string,
@@ -60,8 +51,6 @@ export class CodleClient {
       json?: unknown;
     },
   ): Promise<Record<string, unknown>> {
-    await this.ensureAuth();
-
     const { params, json } = options ?? {};
     this.logRequest(
       method,

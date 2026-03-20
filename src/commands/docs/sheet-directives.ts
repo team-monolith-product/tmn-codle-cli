@@ -1,4 +1,4 @@
-import { BaseCommand } from "../../base-command.js";
+import { Command } from "@oclif/core";
 
 // AIDEV-NOTE: 활동지 directive 문법 문서를 별도 커맨드로 제공한다.
 // tool description에 전체 문서를 넣으면 매 호출마다 토큰이 소비되므로,
@@ -100,10 +100,10 @@ const SHEET_DIRECTIVES_DOC = `# 활동지(sheet) 입력란 Directive 문법
 \`\`\`
 `;
 
-export default class DocsSheetDirectives extends BaseCommand {
+export default class DocsSheetDirectives extends Command {
   static description = "활동지 입력란 directive 문법 가이드를 출력합니다.";
 
   async run(): Promise<void> {
-    this.output({ content: SHEET_DIRECTIVES_DOC });
+    this.log(JSON.stringify({ content: SHEET_DIRECTIVES_DOC }));
   }
 }

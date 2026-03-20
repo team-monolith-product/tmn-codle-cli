@@ -50,12 +50,6 @@ describe("CodleClient", () => {
     vi.unstubAllGlobals();
   });
 
-  it("ensureAuth succeeds with token", async () => {
-    const { CodleClient } = await import("../src/api/client.js");
-    const client = new CodleClient("test-token");
-    await expect(client.ensureAuth()).resolves.toBeUndefined();
-  });
-
   it("request does not retry on 401", async () => {
     let callCount = 0;
     const mockFetch = vi.fn().mockImplementation(() => {
