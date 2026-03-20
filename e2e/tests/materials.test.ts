@@ -22,9 +22,7 @@ describe("material search", () => {
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const output = JSON.stringify(
-      parseCodleOutput(interaction!.result!),
-    );
+    const output = JSON.stringify(parseCodleOutput(interaction!.result!));
     expect(output).toContain(uniqueName);
   });
 
@@ -43,9 +41,7 @@ describe("material search", () => {
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const output = JSON.stringify(
-      parseCodleOutput(interaction!.result!),
-    );
+    const output = JSON.stringify(parseCodleOutput(interaction!.result!));
     expect(output).not.toContain(uniqueName);
   });
 });
@@ -70,9 +66,7 @@ describe("material get", () => {
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const output = JSON.stringify(
-      parseCodleOutput(interaction!.result!),
-    );
+    const output = JSON.stringify(parseCodleOutput(interaction!.result!));
     expect(output).toContain(material.id);
     expect(output).toContain(activity.id);
   });
@@ -115,9 +109,7 @@ describe("material create", () => {
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const output = JSON.stringify(
-      parseCodleOutput(interaction!.result!),
-    );
+    const output = JSON.stringify(parseCodleOutput(interaction!.result!));
     expect(output).toContain(materialName);
   });
 });

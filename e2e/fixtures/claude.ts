@@ -4,11 +4,7 @@ import { describe as _describe, expect, test as base } from "vitest";
 import { ClaudeRunner } from "../lib/claude-runner.js";
 import { TestFactory } from "../lib/factory.js";
 
-const CONFIG_PATH = resolve(
-  import.meta.dirname,
-  "..",
-  ".e2e-config.tmp.json",
-);
+const CONFIG_PATH = resolve(import.meta.dirname, "..", ".e2e-config.tmp.json");
 const PROJECT_DIR = resolve(import.meta.dirname, "..", "..");
 
 interface E2EConfig {

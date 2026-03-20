@@ -1,9 +1,6 @@
 import { describe, expect, test } from "../fixtures/claude.js";
 import { createMaterial } from "../lib/factory.js";
-import {
-  expectCodleCommand,
-  findCodleInteraction,
-} from "../lib/ndjson.js";
+import { expectCodleCommand, findCodleInteraction } from "../lib/ndjson.js";
 
 // ===== problem create =====
 
