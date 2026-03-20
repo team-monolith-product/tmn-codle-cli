@@ -1,14 +1,17 @@
 import { spawn } from "node:child_process";
+import { dirname } from "node:path";
 import { parseNdjson, type ClaudeResult, type UsageStats } from "./ndjson.js";
 
 interface ClaudeRunnerOptions {
-  mcpConfigPath: string;
+  accessToken: string;
+  codleBin: string;
   projectDir: string;
   maxBudgetUsd: string;
 }
 
 export class ClaudeRunner {
-  private mcpConfigPath: string;
+  private accessToken: string;
+  private codleBin: string;
   private projectDir: string;
   private maxBudgetUsd: string;
   lastCostUsd = 0;
@@ -23,7 +26,8 @@ export class ClaudeRunner {
   };
 
   constructor(opts: ClaudeRunnerOptions) {
-    this.mcpConfigPath = opts.mcpConfigPath;
+    this.accessToken = opts.accessToken;
+    this.codleBin = opts.codleBin;
     this.projectDir = opts.projectDir;
     this.maxBudgetUsd = opts.maxBudgetUsd;
   }
@@ -33,6 +37,7 @@ export class ClaudeRunner {
     opts?: { timeout?: number },
   ): Promise<ClaudeResult> {
     const timeout = opts?.timeout ?? 120_000;
+    const codleBinDir = dirname(this.codleBin);
 
     return new Promise<ClaudeResult>((resolve, reject) => {
       const child = spawn(
@@ -43,11 +48,8 @@ export class ClaudeRunner {
           "--output-format",
           "stream-json",
           "--verbose",
-          "--mcp-config",
-          this.mcpConfigPath,
-          "--strict-mcp-config",
           "--allowed-tools",
-          "mcp__codle__*",
+          "bash(codle*)",
           "--max-budget-usd",
           this.maxBudgetUsd,
           "--no-session-persistence",
@@ -56,7 +58,12 @@ export class ClaudeRunner {
         ],
         {
           cwd: this.projectDir,
-          env: { ...process.env, CLAUDECODE: undefined },
+          env: {
+            ...process.env,
+            CLAUDECODE: undefined,
+            CODLE_TOKEN: this.accessToken,
+            PATH: `${codleBinDir}:${process.env.PATH ?? ""}`,
+          },
           stdio: ["ignore", "pipe", "pipe"],
         },
       );

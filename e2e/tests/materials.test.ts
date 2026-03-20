@@ -1,8 +1,12 @@
 import { describe, expect, test } from "../fixtures/claude.js";
 import { createActivity, createMaterial } from "../lib/factory.js";
-import { extractText, findToolResult } from "../lib/ndjson.js";
+import {
+  expectCodleCommand,
+  findCodleInteraction,
+  parseCodleOutput,
+} from "../lib/ndjson.js";
 
-describe("search_materials", () => {
+describe("material search", () => {
   test("seed한 내 자료가 결과에 포함", async ({ claude, factory }) => {
     const uniqueName = `e2e-mine-${Date.now()}`;
     await createMaterial(factory, { name: uniqueName });
@@ -10,16 +14,18 @@ describe("search_materials", () => {
     const result = await claude.run(`내 자료 중 "${uniqueName}"을 검색해줘.`);
 
     expect(result.errors).toHaveLength(0);
-    expect(result.toolNames).toContain("mcp__codle__search_materials");
+    expectCodleCommand(result, "material search");
 
-    const interaction = findToolResult(
+    const interaction = findCodleInteraction(
       result.toolInteractions,
-      "mcp__codle__search_materials",
+      "material search",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const text = extractText(interaction!.result!);
-    expect(text).toContain(uniqueName);
+    const output = JSON.stringify(
+      parseCodleOutput(interaction!.result!),
+    );
+    expect(output).toContain(uniqueName);
   });
 
   test("비공개 자료가 공개 검색에서 제외", async ({ claude, factory }) => {
@@ -29,20 +35,22 @@ describe("search_materials", () => {
     const result = await claude.run("공개된 자료를 검색해줘.");
 
     expect(result.errors).toHaveLength(0);
-    expect(result.toolNames).toContain("mcp__codle__search_materials");
+    expectCodleCommand(result, "material search");
 
-    const interaction = findToolResult(
+    const interaction = findCodleInteraction(
       result.toolInteractions,
-      "mcp__codle__search_materials",
+      "material search",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const text = extractText(interaction!.result!);
-    expect(text).not.toContain(uniqueName);
+    const output = JSON.stringify(
+      parseCodleOutput(interaction!.result!),
+    );
+    expect(output).not.toContain(uniqueName);
   });
 });
 
-describe("get_material_detail", () => {
+describe("material get", () => {
   test("자료와 활동 ID 모두 포함", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
     const activity = await createActivity(factory, material.id, {
@@ -54,21 +62,23 @@ describe("get_material_detail", () => {
     );
 
     expect(result.errors).toHaveLength(0);
-    expect(result.toolNames).toContain("mcp__codle__get_material_detail");
+    expectCodleCommand(result, "material get");
 
-    const interaction = findToolResult(
+    const interaction = findCodleInteraction(
       result.toolInteractions,
-      "mcp__codle__get_material_detail",
+      "material get",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const text = extractText(interaction!.result!);
-    expect(text).toContain(material.id);
-    expect(text).toContain(activity.id);
+    const output = JSON.stringify(
+      parseCodleOutput(interaction!.result!),
+    );
+    expect(output).toContain(material.id);
+    expect(output).toContain(activity.id);
   });
 });
 
-describe("manage_materials", () => {
+describe("material create", () => {
   test("자료 생성 시 본문(markdown) 포함", async ({ claude }) => {
     const materialName = `E2E Body ${Date.now()}`;
     const result = await claude.run(
@@ -76,19 +86,18 @@ describe("manage_materials", () => {
     );
 
     expect(result.errors).toHaveLength(0);
-    expect(result.toolNames).toContain("mcp__codle__manage_materials");
+    expectCodleCommand(result, "material create");
 
-    const interaction = findToolResult(
+    const interaction = findCodleInteraction(
       result.toolInteractions,
-      "mcp__codle__manage_materials",
+      "material create",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    expect(extractText(interaction!.result!)).toMatch(/자료 생성 완료/);
 
-    const input = interaction!.call.input;
-    expect(input.body).toBeDefined();
-    expect(input.body as string).toContain("학습 안내");
+    // CLI command should contain the body content
+    const command = interaction!.call.input.command as string;
+    expect(command).toContain("학습 안내");
   });
 
   test("자료 생성 성공", async ({ claude }) => {
@@ -98,16 +107,17 @@ describe("manage_materials", () => {
     );
 
     expect(result.errors).toHaveLength(0);
-    expect(result.toolNames).toContain("mcp__codle__manage_materials");
+    expectCodleCommand(result, "material create");
 
-    const interaction = findToolResult(
+    const interaction = findCodleInteraction(
       result.toolInteractions,
-      "mcp__codle__manage_materials",
+      "material create",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-    const text = extractText(interaction!.result!);
-    expect(text).toMatch(/자료 생성 완료/);
-    expect(text).toContain(materialName);
+    const output = JSON.stringify(
+      parseCodleOutput(interaction!.result!),
+    );
+    expect(output).toContain(materialName);
   });
 });
