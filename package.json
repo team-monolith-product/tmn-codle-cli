@@ -39,7 +39,16 @@
       "strategy": "pattern",
       "target": "./dist/commands"
     },
-    "topicSeparator": " "
+    "topicSeparator": " ",
+    "topics": {
+      "material": { "description": "자료(Material) 검색, 조회, 생성, 수정, 복제" },
+      "activity": { "description": "활동(Activity) CRUD, 코스 흐름, 갈림길 설정" },
+      "activitiable": { "description": "활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video)" },
+      "problem": { "description": "문제(Problem) CRUD, ProblemCollection 동기화" },
+      "tag": { "description": "태그(Tag) 검색" },
+      "docs": { "description": "문서 및 가이드 출력" },
+      "html-activity-page": { "description": "교안(HtmlActivity) 페이지 동기화" }
+    }
   },
   "engines": {
     "node": ">=22.0.0"

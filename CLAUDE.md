@@ -6,7 +6,7 @@ oclif 기반 CLI. AI 에이전트(Claude Code)가 bash로 `codle <command>` 를 
 
 ```
 src/
-├── base-command.ts          # 공통 플래그(--token, --api-url, --output), CodleClient 생성, 에러 핸들링
+├── base-command.ts          # 공통 플래그(--token, --api-url), CodleClient 생성, JSON 출력, 에러 핸들링
 ├── commands/                # oclif 커맨드 (비즈니스 로직 직접 포함)
 │   ├── material/            # 자료 CRUD + 검색
 │   ├── activity/            # 활동 CRUD + 코스흐름/갈림길

@@ -169,7 +169,7 @@ export default class ActivitiableUpdate extends BaseCommand {
     }
 
     this.error(
-      `${info.type}은 update_activitiable에서 지원하지 않는 유형입니다.`,
+      `${info.type}은 activitiable update에서 지원하지 않는 유형입니다.`,
       { exit: 1 },
     );
   }
