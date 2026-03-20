@@ -15,6 +15,6 @@ export default class ActivityDelete extends BaseCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(ActivityDelete);
     await this.client.deleteActivity(flags["activity-id"]);
-    this.log(`활동 삭제 완료: ${flags["activity-id"]}`);
+    this.output({ id: flags["activity-id"], deleted: true });
   }
 }

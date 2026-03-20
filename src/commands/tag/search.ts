@@ -52,16 +52,6 @@ export default class TagSearch extends BaseCommand {
     const response = await this.client.listTags(params);
     const tags = extractList(response);
 
-    if (!tags.length) {
-      this.log("태그가 없습니다.");
-      return;
-    }
-
-    const lines = [`태그 목록 (${tags.length}건):`];
-    for (const t of tags) {
-      const tagDomain = t.domain ?? "unknown";
-      lines.push(`  [${t.id}] ${t.name ?? "(무제)"} (domain: ${tagDomain})`);
-    }
-    this.log(lines.join("\n"));
+    this.output(tags);
   }
 }

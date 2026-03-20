@@ -19,8 +19,6 @@ export default class MaterialDuplicate extends BaseCommand {
     const response = await this.client.duplicateMaterial(flags["material-id"]);
     const mat = extractSingle(response);
 
-    this.log(
-      `자료 복제 완료: [${mat.id}] ${mat.name} (원본: ${flags["material-id"]})`,
-    );
+    this.output(mat);
   }
 }

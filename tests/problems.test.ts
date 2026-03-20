@@ -69,8 +69,8 @@ describe("problem create", () => {
         { text: "X", isAnswer: false },
       ]),
     ]);
-    expect(output).toContain("문제 생성 완료");
-    expect(output).toContain("10");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("10");
 
     const payload = mockClient.createProblem.mock.calls[0][0];
     expect(payload.data.attributes.title).toBe("OX 문제");
@@ -91,7 +91,8 @@ describe("problem create", () => {
       "--solutions",
       "42",
     ]);
-    expect(output).toContain("문제 생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("11");
   });
 
   it("create descriptive with content converts to blocks", async () => {
@@ -107,7 +108,8 @@ describe("problem create", () => {
       "--content",
       "설명을 작성하세요",
     ]);
-    expect(output).toContain("문제 생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("12");
 
     const payload = mockClient.createProblem.mock.calls[0][0];
     expect(payload.data.attributes.blocks).toBeDefined();
@@ -128,7 +130,8 @@ describe("problem create", () => {
       "--content",
       "문제 내용",
     ]);
-    expect(output).toContain("문제 생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("13");
 
     const payload = mockClient.createProblem.mock.calls[0][0];
     expect(payload.data.attributes.blocks).toBeDefined();
@@ -175,7 +178,8 @@ describe("problem update", () => {
       "--title",
       "수정됨",
     ]);
-    expect(output).toContain("문제 수정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.title).toBe("수정됨");
   });
 
   it("sample_answer만 수정 시 early return 안 됨", async () => {
@@ -191,8 +195,9 @@ describe("problem update", () => {
       "--sample-answer",
       "print('hello')",
     ]);
-    expect(output).toContain("문제 수정 완료");
-    expect(output).not.toContain("수정할 항목이 없습니다");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("10");
+    expect(parsed.message).toBeUndefined();
   });
 
   it("missing problem-id does not call API", async () => {
@@ -208,7 +213,9 @@ describe("problem delete", () => {
     mockClient.deleteProblem.mockResolvedValue({});
 
     const output = await runCommand(ProblemDelete, ["--problem-id", "10"]);
-    expect(output).toContain("문제 삭제 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("10");
+    expect(parsed.deleted).toBe(true);
   });
 
   it("delete API error", async () => {
@@ -283,8 +290,9 @@ describe("problem collection sync", () => {
       "--problems",
       JSON.stringify([{ id: "p1" }, { id: "p2" }, { id: "p3" }]),
     ]);
-    expect(output).toContain("추가");
-    expect(output).toContain("3");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(3);
+    expect(parsed.total).toBe(3);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_create).toHaveLength(3);
@@ -313,8 +321,8 @@ describe("problem collection sync", () => {
       "--problems",
       JSON.stringify([{ id: "p3" }, { id: "p2" }, { id: "p1" }]),
     ]);
-    expect(output).toContain("수정");
-    expect(output).toContain("2");
+    const parsed = JSON.parse(output);
+    expect(parsed.updated).toBe(2);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_create).toHaveLength(0);
@@ -345,8 +353,9 @@ describe("problem collection sync", () => {
       "--problems",
       JSON.stringify([{ id: "p1" }, { id: "p3" }, { id: "p4" }]),
     ]);
-    expect(output).toContain("추가");
-    expect(output).toContain("삭제");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(1);
+    expect(parsed.destroyed).toBe(1);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_create).toHaveLength(1);
@@ -387,8 +396,8 @@ describe("problem collection sync", () => {
       "--problems",
       "[]",
     ]);
-    expect(output).toContain("삭제");
-    expect(output).toContain("2");
+    const parsed = JSON.parse(output);
+    expect(parsed.destroyed).toBe(2);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_create).toHaveLength(0);
@@ -428,7 +437,8 @@ describe("problem collection sync", () => {
         { id: "p3" },
       ]),
     ]);
-    expect(output).toContain("추가");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(3);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_create[0].attributes.point).toBe(2);
@@ -450,7 +460,8 @@ describe("problem collection sync", () => {
       "--problems",
       JSON.stringify([{ id: "p1", point: 3 }]),
     ]);
-    expect(output).toContain("수정");
+    const parsed = JSON.parse(output);
+    expect(parsed.updated).toBe(1);
 
     const payload = mockClient.doManyPCP.mock.calls[0][0];
     expect(payload.data_to_update[0].attributes.point).toBe(3);
@@ -524,7 +535,8 @@ describe("update_activitiable — BoardActivity", () => {
       "--name",
       "새 보드",
     ]);
-    expect(output).toContain("보드 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("b1");
 
     const payload = mockClient.updateBoard.mock.calls[0][1];
     expect(payload.data.attributes.lexical).toBeDefined();
@@ -574,7 +586,8 @@ describe("update_activitiable — SheetActivity", () => {
       "--content",
       "# 활동지 설명",
     ]);
-    expect(output).toContain("활동지 설명 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sa1");
 
     const payload = mockClient.updateSheetActivity.mock.calls[0][1];
     expect(payload.data.attributes.description).toBeDefined();
@@ -633,7 +646,8 @@ describe("update_activitiable — EmbeddedActivity", () => {
       "--url",
       "https://example.com",
     ]);
-    expect(output).toContain("EmbeddedActivity 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("ea1");
 
     const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
     expect(payload.data.attributes.url).toBe("https://example.com");
@@ -656,7 +670,8 @@ describe("update_activitiable — EmbeddedActivity", () => {
       "--goals",
       "목표2",
     ]);
-    expect(output).toContain("EmbeddedActivity 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("ea1");
 
     const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
     expect(payload.data.attributes.url).toBeUndefined();
@@ -679,7 +694,8 @@ describe("update_activitiable — EmbeddedActivity", () => {
       "--goals",
       "학습목표",
     ]);
-    expect(output).toContain("EmbeddedActivity 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("ea1");
 
     const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
     expect(payload.data.attributes.url).toBe("https://codle.io");

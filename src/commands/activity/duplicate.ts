@@ -17,8 +17,6 @@ export default class ActivityDuplicate extends BaseCommand {
     const { flags } = await this.parse(ActivityDuplicate);
     const response = await this.client.duplicateActivity(flags["activity-id"]);
     const activity = extractSingle(response);
-    this.log(
-      `활동 복제 완료: [${activity.id}] ${activity.name} (원본: ${flags["activity-id"]})`,
-    );
+    this.output(activity);
   }
 }

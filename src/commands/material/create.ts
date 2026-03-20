@@ -37,6 +37,6 @@ export default class MaterialCreate extends BaseCommand {
     );
     const mat = extractSingle(response);
 
-    this.log(`자료 생성 완료: [${mat.id}] ${mat.name}`);
+    this.output(mat);
   }
 }

@@ -15,11 +15,6 @@ export abstract class BaseCommand extends Command {
       default: config.apiUrl,
       description: "API 기본 URL",
     }),
-    output: Flags.string({
-      options: ["text", "json"],
-      default: "text",
-      description: "출력 형식",
-    }),
   };
 
   protected client!: CodleClient;
@@ -33,15 +28,8 @@ export abstract class BaseCommand extends Command {
     );
   }
 
-  protected outputResult(text: string, json?: unknown): void {
-    const { flags } = this as unknown as {
-      flags: { output: string };
-    };
-    if (flags?.output === "json" && json !== undefined) {
-      this.log(JSON.stringify(json, null, 2));
-    } else {
-      this.log(text);
-    }
+  protected output(data: unknown): void {
+    this.log(JSON.stringify(data));
   }
 
   async catch(

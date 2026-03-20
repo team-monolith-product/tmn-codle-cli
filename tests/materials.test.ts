@@ -83,7 +83,8 @@ describe("material search", () => {
       "--page-number",
       "1",
     ]);
-    expect(output).toContain("검색 결과가 없습니다");
+    const parsed = JSON.parse(output);
+    expect(parsed).toEqual([]);
   });
 
   it("tag_ids filter", async () => {
@@ -175,11 +176,12 @@ describe("material get", () => {
     });
 
     const output = await runCommand(MaterialGet, ["--material-id", "1"]);
-    expect(output).toContain("테스트 자료");
-    expect(output).toContain("활동1");
-    expect(output).toContain("활동2");
-    expect(output).toContain("AI (category)");
-    expect(output).toContain("코스 흐름");
+    const parsed = JSON.parse(output);
+    expect(parsed.material.name).toBe("테스트 자료");
+    expect(parsed.activities).toHaveLength(2);
+    expect(parsed.tags).toHaveLength(1);
+    expect(parsed.tags[0].name).toBe("AI");
+    expect(parsed.transitions).toHaveLength(1);
   });
 
   it("no activities", async () => {
@@ -193,7 +195,8 @@ describe("material get", () => {
     });
 
     const output = await runCommand(MaterialGet, ["--material-id", "1"]);
-    expect(output).toContain("활동: 없음");
+    const parsed = JSON.parse(output);
+    expect(parsed.activities).toHaveLength(0);
   });
 });
 
@@ -204,8 +207,8 @@ describe("material create", () => {
     );
 
     const output = await runCommand(MaterialCreate, ["--name", "새 자료"]);
-    expect(output).toContain("자료 생성 완료");
-    expect(output).toContain("새 자료");
+    const parsed = JSON.parse(output);
+    expect(parsed.name).toBe("새 자료");
   });
 
   it("create with body (markdown -> Lexical conversion)", async () => {
@@ -219,7 +222,8 @@ describe("material create", () => {
       "--body",
       "본문 내용",
     ]);
-    expect(output).toContain("자료 생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.name).toBe("본문 자료");
 
     const payload = mockClient.createMaterial.mock.calls[0][0];
     const body = payload.data.attributes.body;
@@ -251,7 +255,8 @@ describe("material update", () => {
       "--name",
       "수정됨",
     ]);
-    expect(output).toContain("자료 수정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.name).toBe("수정됨");
   });
 
   it("update with body (markdown -> Lexical conversion)", async () => {
@@ -265,7 +270,8 @@ describe("material update", () => {
       "--body",
       "수정된 본문",
     ]);
-    expect(output).toContain("자료 수정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("1");
 
     const payload = mockClient.updateMaterial.mock.calls[0][1];
     const body = payload.data.attributes.body;
@@ -292,8 +298,9 @@ describe("material duplicate", () => {
     );
 
     const output = await runCommand(MaterialDuplicate, ["--material-id", "1"]);
-    expect(output).toContain("자료 복제 완료");
-    expect(output).toContain("원본: 1");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("2");
+    expect(parsed.name).toBe("복제됨");
   });
 
   it("duplicate without material-id errors", async () => {

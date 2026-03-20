@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base-command.js";
-import { extractList, formatMaterialSummary } from "../../api/models.js";
+import { extractList } from "../../api/models.js";
 
 export default class MaterialSearch extends BaseCommand {
   static description = "자료(Material)를 검색합니다.";
@@ -52,15 +52,6 @@ export default class MaterialSearch extends BaseCommand {
     const response = await this.client.listMaterials(params);
     const materials = extractList(response);
 
-    if (!materials.length) {
-      this.log("검색 결과가 없습니다.");
-      return;
-    }
-
-    const lines = [`자료 검색 결과 (${materials.length}건):`];
-    for (const m of materials) {
-      lines.push(formatMaterialSummary(m));
-    }
-    this.log(lines.join("\n"));
+    this.output(materials);
   }
 }

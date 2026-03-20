@@ -32,7 +32,7 @@ export default class ActivityUpdate extends BaseCommand {
     if (flags["tag-ids"] !== undefined) attrs.tag_ids = flags["tag-ids"];
 
     if (!Object.keys(attrs).length) {
-      this.log("수정할 항목이 없습니다.");
+      this.output({ message: "수정할 항목이 없습니다." });
       return;
     }
 
@@ -46,6 +46,6 @@ export default class ActivityUpdate extends BaseCommand {
       payload as Record<string, unknown>,
     );
     const activity = extractSingle(response);
-    this.log(`활동 수정 완료: [${activity.id}] ${activity.name}`);
+    this.output(activity);
   }
 }

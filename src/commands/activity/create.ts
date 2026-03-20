@@ -138,8 +138,6 @@ export default class ActivityCreate extends BaseCommand {
       payload as Record<string, unknown>,
     );
     const activity = extractSingle(response);
-    this.log(
-      `활동 생성 완료: [${activity.id}] ${activity.name} (type: ${resolvedType})`,
-    );
+    this.output(activity);
   }
 }

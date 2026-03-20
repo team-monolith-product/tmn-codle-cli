@@ -141,8 +141,8 @@ export default class ProblemCreate extends BaseCommand {
       }
     }
 
-    let resultText = `문제 생성 완료: [${problemId}] ${problem.title}`;
-    if (warnings.length) resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
-    this.log(resultText);
+    const result: Record<string, unknown> = { ...problem };
+    if (warnings.length) result.warnings = warnings;
+    this.output(result);
   }
 }

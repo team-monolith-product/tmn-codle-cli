@@ -122,9 +122,9 @@ describe("html-activity-page sync — 페이지 생성", () => {
         { url: "https://example.com/page2" },
       ]),
     ]);
-    expect(output).toContain("동기화 완료");
-    expect(output).toContain("추가");
-    expect(output).toContain("2");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(2);
+    expect(parsed.total).toBe(2);
 
     // do_many 호출 확인
     const doManyCall = mockClient.request.mock.calls[2];
@@ -206,7 +206,8 @@ describe("html-activity-page sync — 페이지 수정", () => {
         { url: "https://new.com/page2" }, // changed
       ]),
     ]);
-    expect(output).toContain("수정");
+    const parsed = JSON.parse(output);
+    expect(parsed.updated).toBe(1);
 
     const payload = mockClient.request.mock.calls[2][2].json;
     expect(payload.data_to_create).toHaveLength(0);
@@ -251,8 +252,8 @@ describe("html-activity-page sync — 페이지 삭제", () => {
       "--pages",
       "[]",
     ]);
-    expect(output).toContain("삭제");
-    expect(output).toContain("2");
+    const parsed = JSON.parse(output);
+    expect(parsed.destroyed).toBe(2);
 
     const payload = mockClient.request.mock.calls[2][2].json;
     expect(payload.data_to_destroy).toHaveLength(2);
@@ -280,8 +281,9 @@ describe("html-activity-page sync — 복합 동작", () => {
       ]),
     ]);
 
-    expect(output).toContain("수정");
-    expect(output).toContain("삭제");
+    const parsed = JSON.parse(output);
+    expect(parsed.updated).toBe(1);
+    expect(parsed.destroyed).toBe(1);
 
     const payload = mockClient.request.mock.calls[2][2].json;
     expect(payload.data_to_create).toHaveLength(0);
@@ -311,8 +313,9 @@ describe("html-activity-page sync — 복합 동작", () => {
       ]),
     ]);
 
-    expect(output).toContain("추가");
-    expect(output).toContain("수정");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(1);
+    expect(parsed.updated).toBe(1);
 
     const payload = mockClient.request.mock.calls[2][2].json;
     expect(payload.data_to_update).toHaveLength(1);

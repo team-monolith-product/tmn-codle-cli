@@ -77,7 +77,7 @@ export default class ProblemUpdate extends BaseCommand {
       flags["sample-answer"] !== undefined ||
       descriptiveCriterium !== undefined;
     if (!Object.keys(attrs).length && !hasSideUpdates) {
-      this.log("수정할 항목이 없습니다.");
+      this.output({ message: "수정할 항목이 없습니다." });
       return;
     }
 
@@ -211,8 +211,8 @@ export default class ProblemUpdate extends BaseCommand {
       }
     }
 
-    let resultText = `문제 수정 완료: [${problem.id}] ${problem.title}`;
-    if (warnings.length) resultText += `\n⚠️ ${warnings.join("\n⚠️ ")}`;
-    this.log(resultText);
+    const result: Record<string, unknown> = { ...problem };
+    if (warnings.length) result.warnings = warnings;
+    this.output(result);
   }
 }

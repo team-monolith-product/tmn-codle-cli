@@ -115,8 +115,8 @@ describe("update_activitiable — BoardActivity", () => {
       "--content",
       "# 안내문",
     ]);
-    expect(output).toContain("보드 업데이트 완료");
-    expect(output).toContain("b1");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("b1");
 
     const payload = mockClient.updateBoard.mock.calls[0][1];
     expect(payload.data.attributes.lexical).toBeDefined();
@@ -137,7 +137,8 @@ describe("update_activitiable — BoardActivity", () => {
       "--name",
       "새 보드 이름",
     ]);
-    expect(output).toContain("보드 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("b1");
 
     const payload = mockClient.updateBoard.mock.calls[0][1];
     expect(payload.data.attributes.name).toBe("새 보드 이름");
@@ -198,8 +199,8 @@ describe("update_activitiable — SheetActivity", () => {
       "--content",
       "활동지 설명입니다",
     ]);
-    expect(output).toContain("활동지 설명 업데이트 완료");
-    expect(output).toContain("s1");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("s1");
 
     const payload = mockClient.updateSheetActivity.mock.calls[0][1];
     expect(payload.data.attributes.description).toBeDefined();
@@ -242,7 +243,8 @@ describe("update_activitiable — EmbeddedActivity", () => {
       "--url",
       "https://example.com",
     ]);
-    expect(output).toContain("EmbeddedActivity 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("e1");
 
     const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
     expect(payload.data.attributes.url).toBe("https://example.com");
@@ -261,7 +263,8 @@ describe("update_activitiable — EmbeddedActivity", () => {
       "--goals",
       "목표 2",
     ]);
-    expect(output).toContain("EmbeddedActivity 업데이트 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("e1");
 
     const payload = mockClient.updateEmbeddedActivity.mock.calls[0][1];
     expect(payload.data.attributes.goals).toHaveLength(2);
@@ -315,8 +318,9 @@ describe("update_activitiable — VideoActivity", () => {
       "--url",
       "https://example.com/video",
     ]);
-    expect(output).toContain("VideoActivity 업데이트 완료");
-    expect(output).toContain("v1");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("v1");
+    expect(parsed.activity_id).toBe("act-1");
 
     const putCall = mockClient.request.mock.calls[1];
     expect(putCall[0]).toBe("PUT");

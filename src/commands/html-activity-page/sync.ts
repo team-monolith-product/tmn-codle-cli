@@ -156,7 +156,7 @@ export default class HtmlActivityPageSync extends BaseCommand {
     }
 
     if (!dataToCreate.length && !dataToUpdate.length && !dataToDestroy.length) {
-      this.log("변경 사항이 없습니다.");
+      this.output({ message: "변경 사항 없음.", total: desiredPages.length });
       return;
     }
 
@@ -168,12 +168,11 @@ export default class HtmlActivityPageSync extends BaseCommand {
       },
     });
 
-    const parts: string[] = [
-      `HtmlActivityPages 동기화 완료 (html_activity=${htmlActivityId})`,
-    ];
-    if (dataToCreate.length) parts.push(`추가: ${dataToCreate.length}건`);
-    if (dataToUpdate.length) parts.push(`수정: ${dataToUpdate.length}건`);
-    if (dataToDestroy.length) parts.push(`삭제: ${dataToDestroy.length}건`);
-    this.log(parts.join(" / "));
+    this.output({
+      created: dataToCreate.length,
+      updated: dataToUpdate.length,
+      destroyed: dataToDestroy.length,
+      total: desiredPages.length,
+    });
   }
 }

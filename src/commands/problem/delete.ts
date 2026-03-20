@@ -15,6 +15,6 @@ export default class ProblemDelete extends BaseCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(ProblemDelete);
     await this.client.deleteProblem(flags["problem-id"]);
-    this.log(`문제 삭제 완료: [${flags["problem-id"]}]`);
+    this.output({ id: flags["problem-id"], deleted: true });
   }
 }

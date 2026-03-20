@@ -104,6 +104,6 @@ export default class DocsSheetDirectives extends BaseCommand {
   static description = "활동지 입력란 directive 문법 가이드를 출력합니다.";
 
   async run(): Promise<void> {
-    this.log(SHEET_DIRECTIVES_DOC);
+    this.output({ content: SHEET_DIRECTIVES_DOC });
   }
 }

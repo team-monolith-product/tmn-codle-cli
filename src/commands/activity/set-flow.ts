@@ -65,10 +65,10 @@ export default class ActivitySetFlow extends BaseCommand {
 
     await this.client.doManyActivityTransitions(payload);
 
-    const chain = activityIds.join(" → ");
-    const destroyedMsg = dataToDestroy.length
-      ? `, 기존 선형 transition ${dataToDestroy.length}개 제거`
-      : "";
-    this.log(`코스 흐름 설정 완료: ${chain}${destroyedMsg}`);
+    this.output({
+      activity_ids: activityIds,
+      created: dataToCreate.length,
+      destroyed: dataToDestroy.length,
+    });
   }
 }

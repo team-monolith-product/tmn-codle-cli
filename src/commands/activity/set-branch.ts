@@ -86,16 +86,11 @@ export default class ActivitySetBranch extends BaseCommand {
 
     await this.client.doManyActivityTransitions(payload);
 
-    const levelsCreated = Object.entries(levelMap)
-      .filter(([, v]) => v)
-      .map(([level, afterId]) => `${level}=${afterId}`);
-    const destroyedMsg = dataToDestroy.length
-      ? `, 기존 transition ${dataToDestroy.length}개 제거`
-      : "";
-    this.log(
-      `갈림길 설정 완료: ${flags["branch-from"]} → ${levelsCreated.join(
-        ", ",
-      )}${destroyedMsg}`,
-    );
+    this.output({
+      branch_from: flags["branch-from"],
+      levels: Object.fromEntries(Object.entries(levelMap).filter(([, v]) => v)),
+      created: dataToCreate.length,
+      destroyed: dataToDestroy.length,
+    });
   }
 }

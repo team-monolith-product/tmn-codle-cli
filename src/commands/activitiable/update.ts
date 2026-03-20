@@ -103,9 +103,7 @@ export default class ActivitiableUpdate extends BaseCommand {
         payload as Record<string, unknown>,
       );
       const board = extractSingle(response);
-      this.log(
-        `보드 업데이트 완료: [${board.id}] (activity=${flags["activity-id"]})`,
-      );
+      this.output(board);
       return;
     }
 
@@ -124,9 +122,7 @@ export default class ActivitiableUpdate extends BaseCommand {
         payload as Record<string, unknown>,
       );
       const sheet = extractSingle(response);
-      this.log(
-        `활동지 설명 업데이트 완료: [${sheet.id}] (activity=${flags["activity-id"]})`,
-      );
+      this.output(sheet);
       return;
     }
 
@@ -152,9 +148,7 @@ export default class ActivitiableUpdate extends BaseCommand {
         payload as Record<string, unknown>,
       );
       const embedded = extractSingle(response);
-      this.log(
-        `EmbeddedActivity 업데이트 완료: [${embedded.id}] (activity=${flags["activity-id"]})`,
-      );
+      this.output(embedded);
       return;
     }
 
@@ -170,9 +164,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       await this.client.request("PUT", `/api/v1/video_activities/${info.id}`, {
         json: payload,
       });
-      this.log(
-        `VideoActivity 업데이트 완료: [${info.id}] (activity=${flags["activity-id"]})`,
-      );
+      this.output({ id: info.id, activity_id: flags["activity-id"] });
       return;
     }
 

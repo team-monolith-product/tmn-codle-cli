@@ -83,8 +83,8 @@ describe("activity create", () => {
       "QuizActivity",
     ]);
 
-    expect(output).toContain("100");
-    expect(output).toContain("생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("100");
     expect(mockClient.request).toHaveBeenCalledWith(
       "POST",
       "/api/v1/quiz_activities",
@@ -168,7 +168,8 @@ describe("activity create", () => {
       "1",
     ]);
 
-    expect(output).toContain("생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("100");
     expect(mockClient.request).toHaveBeenCalledWith(
       "POST",
       "/api/v1/quiz_activities",
@@ -216,7 +217,8 @@ describe("activity create", () => {
       "stage",
     ]);
 
-    expect(output).toContain("생성 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("101");
     expect(mockClient.request).toHaveBeenCalledWith(
       "POST",
       "/api/v1/entry_activities",
@@ -333,7 +335,8 @@ describe("activity update", () => {
       "--depth",
       "0",
     ]);
-    expect(output).toContain("수정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("1");
   });
 
   it("update name", async () => {
@@ -346,7 +349,8 @@ describe("activity update", () => {
       "--name",
       "새이름",
     ]);
-    expect(output).toContain("수정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.name).toBe("새이름");
   });
 });
 
@@ -354,7 +358,9 @@ describe("activity delete", () => {
   it("successful delete", async () => {
     mockClient.deleteActivity.mockResolvedValue({});
     const output = await runCommand(ActivityDelete, ["--activity-id", "1"]);
-    expect(output).toContain("삭제 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("1");
+    expect(parsed.deleted).toBe(true);
   });
 
   it("delete API error", async () => {
@@ -386,9 +392,12 @@ describe("activity set-branch", () => {
       "--low-activity-id",
       "52",
     ]);
-    expect(output).toContain("갈림길 설정 완료");
-    expect(output).toContain("mid=51");
-    expect(output).toContain("low=52");
+    const parsed = JSON.parse(output);
+    expect(parsed.branch_from).toBe("50");
+    expect(parsed.levels.mid).toBe("51");
+    expect(parsed.levels.low).toBe("52");
+    expect(parsed.created).toBe(2);
+    expect(parsed.destroyed).toBe(0);
 
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_create).toHaveLength(2);
@@ -414,7 +423,8 @@ describe("activity set-branch", () => {
       "--high-activity-id",
       "53",
     ]);
-    expect(output).toContain("갈림길 설정 완료");
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(3);
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_create).toHaveLength(3);
   });
@@ -470,7 +480,8 @@ describe("activity set-branch", () => {
       "--low-activity-id",
       "52",
     ]);
-    expect(output).toContain("기존 transition 1개 제거");
+    const parsed = JSON.parse(output);
+    expect(parsed.destroyed).toBe(1);
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_destroy).toEqual([{ id: "old-t-1" }]);
   });
@@ -515,8 +526,9 @@ describe("activity set-flow", () => {
       "--activity-ids",
       "20",
     ]);
-    expect(output).toContain("코스 흐름 설정 완료");
-    expect(output).toContain("10 → 20");
+    const parsed = JSON.parse(output);
+    expect(parsed.activity_ids).toEqual(["10", "20"]);
+    expect(parsed.created).toBe(1);
 
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_create).toHaveLength(1);
@@ -544,7 +556,8 @@ describe("activity set-flow", () => {
       "--activity-ids",
       "30",
     ]);
-    expect(output).toContain("10 → 20 → 30");
+    const parsed = JSON.parse(output);
+    expect(parsed.activity_ids).toEqual(["10", "20", "30"]);
 
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_create).toHaveLength(2);
@@ -588,7 +601,8 @@ describe("activity set-flow", () => {
       "--activity-ids",
       "20",
     ]);
-    expect(output).toContain("기존 선형 transition 2개 제거");
+    const parsed = JSON.parse(output);
+    expect(parsed.destroyed).toBe(2);
 
     const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
     expect(callArgs.data_to_destroy).toEqual([

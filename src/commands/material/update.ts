@@ -34,7 +34,7 @@ export default class MaterialUpdate extends BaseCommand {
     if (flags.body !== undefined) attrs.body = convertFromMarkdown(flags.body);
 
     if (!Object.keys(attrs).length) {
-      this.log("수정할 항목이 없습니다.");
+      this.output({ message: "수정할 항목이 없습니다." });
       return;
     }
 
@@ -49,6 +49,6 @@ export default class MaterialUpdate extends BaseCommand {
     );
     const mat = extractSingle(response);
 
-    this.log(`자료 수정 완료: [${mat.id}] ${mat.name}`);
+    this.output(mat);
   }
 }
