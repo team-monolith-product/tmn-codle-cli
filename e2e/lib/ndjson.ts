@@ -56,19 +56,18 @@ function matchesCodleSubcommand(command: string, subcommand: string): boolean {
   return command.includes(spaced) || command.includes(coloned);
 }
 
-/** Find first bash tool interaction where the command contains the given codle subcommand. */
+/** Find first bash tool interaction where the command contains the given codle subcommand.
+ *  Excludes --help calls to avoid matching exploration commands. */
 export function findCodleInteraction(
   interactions: ToolInteraction[],
   subcommand: string,
 ): ToolInteraction | undefined {
-  return interactions.find(
-    (i) =>
-      i.call.name === "Bash" &&
-      matchesCodleSubcommand(
-        (i.call.input.command as string) ?? "",
-        subcommand,
-      ),
-  );
+  return interactions.find((i) => {
+    if (i.call.name !== "Bash") return false;
+    const cmd = (i.call.input.command as string) ?? "";
+    if (cmd.includes("--help")) return false;
+    return matchesCodleSubcommand(cmd, subcommand);
+  });
 }
 
 /** Find all bash tool interactions matching a codle subcommand. */
@@ -88,6 +87,18 @@ export function findAllCodleInteractions(
 
 /** Parse JSON output from a codle CLI result. */
 export function parseCodleOutput<T = unknown>(result: ToolResult): T {
+  // AIDEV-NOTE: CLI stdout에 oclif warning 등 non-JSON 행이 섞일 수 있다.
+  // 마지막 유효한 JSON 행을 찾아서 파싱한다.
+  const lines = result.content.split("\n");
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    try {
+      return JSON.parse(line) as T;
+    } catch {
+      continue;
+    }
+  }
   return JSON.parse(result.content) as T;
 }
 

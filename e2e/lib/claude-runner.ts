@@ -39,17 +39,31 @@ export class ClaudeRunner {
     const timeout = opts?.timeout ?? 120_000;
     const codleBinDir = dirname(this.codleBin);
 
+    // AIDEV-NOTE: Claude에게 codle CLI의 존재와 사용법을 알려줘야 한다.
+    // --allowed-tools만으로는 CLI의 존재를 알 수 없으므로 프롬프트에 context를 주입한다.
+    // 구체적인 커맨드 구조를 제공하여 --help 탐색 없이 바로 실행하도록 유도한다.
+    const systemPrompt =
+      `You have the "codle" CLI. CODLE_TOKEN is already set. Output is JSON. ` +
+      `Commands: codle material search|get|create|update|duplicate, ` +
+      `codle activity create|update|delete|duplicate|set-flow|set-branch, ` +
+      `codle activitiable update, codle problem create|update|delete, ` +
+      `codle problem collection sync, codle tag search, ` +
+      `codle html-activity-page sync, codle docs sheet-directives. ` +
+      `Use --help on any command to see flags. Do not explore the codebase.`;
+
+    const fullPrompt = `${systemPrompt}\n\n${prompt}`;
+
     return new Promise<ClaudeResult>((resolve, reject) => {
       const child = spawn(
         "claude",
         [
           "-p",
-          prompt,
+          fullPrompt,
           "--output-format",
           "stream-json",
           "--verbose",
           "--allowed-tools",
-          "bash(codle*)",
+          "Bash",
           "--max-budget-usd",
           this.maxBudgetUsd,
           "--no-session-persistence",
