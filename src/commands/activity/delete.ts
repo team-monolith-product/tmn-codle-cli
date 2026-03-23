@@ -24,7 +24,9 @@ export default class ActivityDelete extends BaseCommand {
     const { args, flags } = await this.parse(ActivityDelete);
     const activityId = args.id ?? flags["activity-id"];
     if (!activityId) {
-      this.error("활동 ID를 인자 또는 --activity-id로 지정하세요.", { exit: 1 });
+      this.error("활동 ID를 인자 또는 --activity-id로 지정하세요.", {
+        exit: 1,
+      });
     }
 
     await this.client.deleteActivity(activityId);

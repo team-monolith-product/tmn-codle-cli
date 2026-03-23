@@ -25,7 +25,9 @@ export default class MaterialDuplicate extends BaseCommand {
     const { args, flags } = await this.parse(MaterialDuplicate);
     const materialId = args.id ?? flags["material-id"];
     if (!materialId) {
-      this.error("자료 ID를 인자 또는 --material-id로 지정하세요.", { exit: 1 });
+      this.error("자료 ID를 인자 또는 --material-id로 지정하세요.", {
+        exit: 1,
+      });
     }
 
     const response = await this.client.duplicateMaterial(materialId);
