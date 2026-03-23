@@ -51,7 +51,10 @@
         "description": "활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video)"
       },
       "problem": {
-        "description": "문제(Problem) CRUD, ProblemCollection 동기화"
+        "description": "문제(Problem) CRUD"
+      },
+      "problem-collection": {
+        "description": "활동의 ProblemCollection 문제 목록 동기화"
       },
       "tag": {
         "description": "태그(Tag) 검색"

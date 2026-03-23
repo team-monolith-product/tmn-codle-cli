@@ -42,7 +42,7 @@ vi.mock("../src/lexical/index.js", () => ({
 import ProblemCreate from "../src/commands/problem/create.js";
 import ProblemUpdate from "../src/commands/problem/update.js";
 import ProblemDelete from "../src/commands/problem/delete.js";
-import ProblemCollectionSync from "../src/commands/problem/collection/sync.js";
+import ProblemCollectionSync from "../src/commands/problem-collection/sync.js";
 import ActivitiableUpdate from "../src/commands/activitiable/update.js";
 import { runCommand } from "./run-command.js";
 

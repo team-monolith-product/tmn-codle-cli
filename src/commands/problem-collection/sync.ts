@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 
-import { CodleClient } from "../../../api/client.js";
-import { BaseCommand } from "../../../base-command.js";
+import { CodleClient } from "../../api/client.js";
+import { BaseCommand } from "../../base-command.js";
 
 interface ExistingPcp {
   id: string;

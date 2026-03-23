@@ -47,7 +47,7 @@ export class ClaudeRunner {
       `Commands: codle material search|get|create|update|duplicate, ` +
       `codle activity create|update|delete|duplicate|set-flow|set-branch, ` +
       `codle activitiable update, codle problem create|update|delete, ` +
-      `codle problem collection sync, codle tag search, ` +
+      `codle problem-collection sync, codle tag search, ` +
       `codle html-activity-page sync, codle docs sheet-directives. ` +
       `Use --help on any command to see flags. Do not explore the codebase.`;
 

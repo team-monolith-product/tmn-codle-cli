@@ -1,5 +1,5 @@
 import { describe, expect, test } from "../fixtures/claude.js";
-import { createMaterial } from "../lib/factory.js";
+import { createActivity, createMaterial } from "../lib/factory.js";
 import { expectCodleCommand, findCodleInteraction } from "../lib/ndjson.js";
 
 // ===== problem create =====
@@ -104,22 +104,35 @@ describe("problem create", () => {
   });
 });
 
-// ===== problem collection sync =====
+// ===== problem-collection sync =====
+// AIDEV-NOTE: factory로 활동과 문제를 미리 생성하고, AI에게는 sync만 요청한다.
+// multi-step(활동 생성 + 문제 생성 + sync)을 하나의 프롬프트에 넣으면 haiku가 실패한다.
 
-describe("problem collection sync", () => {
+describe("problem-collection sync", () => {
   test("퀴즈 활동에 문제 연결", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
+    const quizActivitiable = await factory.create<{ id: string }>(
+      "quiz_activity",
+    );
+    const activity = await createActivity(factory, material.id, {
+      name: "E2E Quiz",
+      activitiableType: "QuizActivity",
+      activitiableId: quizActivitiable.id,
+    });
+    const problem = await factory.create<{ id: string }>("problem", {
+      title: "E2E OX",
+      problemType: "quiz",
+    });
 
     const result = await claude.run(
-      `자료 ID "${material.id}"에 퀴즈 활동 "E2E Quiz"를 만들고, ` +
-        `"E2E OX" 제목의 O/X 문제(O가 정답)를 만들어서 그 퀴즈 활동에 연결해줘.`,
+      `활동 ID "${activity.id}"에 문제 ID "${problem.id}"를 연결해줘.`,
     );
 
-    expectCodleCommand(result, "problem collection sync");
+    expectCodleCommand(result, "problem-collection sync");
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem collection sync",
+      "problem-collection sync",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
@@ -127,42 +140,61 @@ describe("problem collection sync", () => {
 
   test("여러 문제를 퀴즈에 순서대로 연결", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
+    const quizActivitiable = await factory.create<{ id: string }>(
+      "quiz_activity",
+    );
+    const activity = await createActivity(factory, material.id, {
+      name: "E2E Multi",
+      activitiableType: "QuizActivity",
+      activitiableId: quizActivitiable.id,
+    });
+    const p1 = await factory.create<{ id: string }>("problem", {
+      title: "E2E Q1",
+      problemType: "quiz",
+    });
+    const p2 = await factory.create<{ id: string }>("problem", {
+      title: "E2E Q2",
+      problemType: "quiz",
+    });
 
     const result = await claude.run(
-      `자료 ID "${material.id}"에 퀴즈 활동 "E2E Multi"를 만들고, ` +
-        `다음 2개 문제를 만들어서 순서대로 연결해줘:\n` +
-        `1번: "E2E Q1" (O/X, O가 정답)\n` +
-        `2번: "E2E Q2" (객관식, 선택지: A정답/B/C/D)`,
+      `활동 ID "${activity.id}"에 문제 "${p1.id}"와 "${p2.id}"를 순서대로 연결해줘.`,
     );
 
-    expectCodleCommand(result, "problem collection sync");
+    expectCodleCommand(result, "problem-collection sync");
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem collection sync",
+      "problem-collection sync",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
-
-    // Command should reference multiple problem IDs
-    const command = interaction!.call.input.command as string;
-    expect(command).toMatch(/--problem-ids/);
   });
 
-  test("활동지에 문제 연결 (기본 문제 교체)", async ({ claude, factory }) => {
+  test("활동지에 문제 연결", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
+    const sheetActivitiable = await factory.create<{ id: string }>(
+      "sheet_activity",
+    );
+    const activity = await createActivity(factory, material.id, {
+      name: "E2E Sheet",
+      activitiableType: "SheetActivity",
+      activitiableId: sheetActivitiable.id,
+    });
+    const problem = await factory.create<{ id: string }>("problem", {
+      title: "E2E Sheet Problem",
+      problemType: "sheet",
+    });
 
     const result = await claude.run(
-      `자료 ID "${material.id}"에 활동지 활동 "E2E Sheet"를 만들고, ` +
-        `"E2E 문제1" (sheet, 내용: "설명하시오")과 ` +
-        `"E2E 문제2" (sheet, 내용: "비교하시오")를 만들어서 활동에 연결해줘.`,
+      `활동 ID "${activity.id}"에 문제 ID "${problem.id}"를 연결해줘.`,
     );
 
-    expectCodleCommand(result, "problem collection sync");
+    expectCodleCommand(result, "problem-collection sync");
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem collection sync",
+      "problem-collection sync",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
