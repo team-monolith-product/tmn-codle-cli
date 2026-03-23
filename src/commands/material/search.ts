@@ -1,4 +1,4 @@
-import { Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base-command.js";
 import { extractList } from "../../api/models.js";
@@ -7,10 +7,15 @@ export default class MaterialSearch extends BaseCommand {
   static description = "자료(Material)를 검색합니다.";
 
   static examples = [
+    "<%= config.bin %> <%= command.id %> 파이썬",
     "<%= config.bin %> <%= command.id %> --query 파이썬",
     "<%= config.bin %> <%= command.id %> --tag-ids 10 --tag-ids 20",
     "<%= config.bin %> <%= command.id %> --is-public",
   ];
+
+  static args = {
+    query: Args.string({ description: "검색 키워드" }),
+  };
 
   static flags = {
     query: Flags.string({ description: "검색 키워드 (자료 이름에서 검색)" }),
@@ -33,14 +38,15 @@ export default class MaterialSearch extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(MaterialSearch);
+    const { args, flags } = await this.parse(MaterialSearch);
+    const query = args.query ?? flags.query;
 
     const params: Record<string, string | number> = {
       "page[size]": Math.min(flags["page-size"], 100),
       "page[number]": flags["page-number"],
     };
 
-    if (flags.query) params["filter[query]"] = flags.query;
+    if (query) params["filter[query]"] = query;
 
     if (flags["is-public"]) {
       params["filter[is_public]"] = "true";
