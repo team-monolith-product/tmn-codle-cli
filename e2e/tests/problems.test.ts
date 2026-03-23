@@ -119,6 +119,7 @@ describe("problem-collection sync", () => {
       activitiableType: "QuizActivity",
       activitiableId: quizActivitiable.id,
     });
+    await factory.create("problem_collection", { activityId: activity.id });
     const problem = await factory.create<{ id: string }>("problem", {
       title: "E2E OX",
       problemType: "quiz",
@@ -148,6 +149,7 @@ describe("problem-collection sync", () => {
       activitiableType: "QuizActivity",
       activitiableId: quizActivitiable.id,
     });
+    await factory.create("problem_collection", { activityId: activity.id });
     const p1 = await factory.create<{ id: string }>("problem", {
       title: "E2E Q1",
       problemType: "quiz",
@@ -181,6 +183,7 @@ describe("problem-collection sync", () => {
       activitiableType: "SheetActivity",
       activitiableId: sheetActivitiable.id,
     });
+    await factory.create("problem_collection", { activityId: activity.id });
     const problem = await factory.create<{ id: string }>("problem", {
       title: "E2E Sheet Problem",
       problemType: "sheet",
