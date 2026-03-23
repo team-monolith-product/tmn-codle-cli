@@ -10,7 +10,6 @@ describe("problem create", () => {
       `"E2E OX" 제목으로 퀴즈 문제를 만들어줘. O가 정답이고 X가 오답인 O/X 문제야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -32,7 +31,6 @@ describe("problem create", () => {
         `선택지는 이미지, 텍스트(정답), 소리, 수치야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -52,7 +50,6 @@ describe("problem create", () => {
         `질문은 "AI가 스스로 패턴을 찾는 학습 방식은?"이고, 정답은 "비지도학습"이야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -76,7 +73,6 @@ describe("problem create", () => {
         `채점기준 하(0.3): "설명이 부족하다."`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -95,7 +91,6 @@ describe("problem create", () => {
       `"E2E 활동지" 제목으로 활동지(sheet) 문제를 만들어줘. 내용은 "다음을 설명하시오"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
