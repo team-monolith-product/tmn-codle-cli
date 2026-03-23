@@ -26,16 +26,15 @@ export default class MaterialGet extends BaseCommand {
     const { args, flags } = await this.parse(MaterialGet);
     const materialId = args.id ?? flags["material-id"];
     if (!materialId) {
-      this.error("자료 ID를 인자 또는 --material-id로 지정하세요.", { exit: 1 });
+      this.error("자료 ID를 인자 또는 --material-id로 지정하세요.", {
+        exit: 1,
+      });
     }
 
     const params = {
       include: "activities,activities.activitiable,tags,activity_transitions",
     };
-    const response = await this.client.getMaterial(
-      materialId,
-      params,
-    );
+    const response = await this.client.getMaterial(materialId, params);
     const material = extractSingle(response);
 
     const included =
