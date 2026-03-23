@@ -1,4 +1,4 @@
-import { Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 
 import { CodleAPIError } from "../../api/errors.js";
 import { buildJsonApiPayload, extractSingle } from "../../api/models.js";
@@ -13,14 +13,18 @@ export default class ProblemUpdate extends BaseCommand {
   static description = "문제를 수정합니다.";
 
   static examples = [
+    "<%= config.bin %> <%= command.id %> 789 --title '수정된 제목'",
     "<%= config.bin %> <%= command.id %> --problem-id 789 --title '수정된 제목'",
-    "<%= config.bin %> <%= command.id %> --problem-id 789 --content '새 본문'",
+    "<%= config.bin %> <%= command.id %> 789 --content '새 본문'",
   ];
+
+  static args = {
+    id: Args.string({ description: "문제 ID" }),
+  };
 
   static flags = {
     "problem-id": Flags.string({
-      required: true,
-      description: "문제 ID",
+      description: "문제 ID (또는 첫 번째 인자로 전달)",
     }),
     title: Flags.string({ description: "문제 제목" }),
     "problem-type": Flags.string({
@@ -51,7 +55,11 @@ export default class ProblemUpdate extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(ProblemUpdate);
+    const { args, flags } = await this.parse(ProblemUpdate);
+    const problemId = args.id ?? flags["problem-id"];
+    if (!problemId) {
+      this.error("문제 ID를 인자 또는 --problem-id로 지정하세요.", { exit: 1 });
+    }
 
     const choices = flags.choices ? JSON.parse(flags.choices) : undefined;
     const inputOptions = flags["input-options"]
@@ -92,24 +100,20 @@ export default class ProblemUpdate extends BaseCommand {
 
     let problem: Record<string, unknown> = {};
     if (Object.keys(attrs).length) {
-      const payload = buildJsonApiPayload(
-        "problems",
-        attrs,
-        flags["problem-id"],
-      );
+      const payload = buildJsonApiPayload("problems", attrs, problemId);
       const response = await this.client.updateProblem(
-        flags["problem-id"],
+        problemId,
         payload as Record<string, unknown>,
       );
       problem = extractSingle(response);
     } else {
       const probResp = await this.client.request(
         "GET",
-        `/api/v1/problems/${flags["problem-id"]}`,
+        `/api/v1/problems/${problemId}`,
       );
       const probData = (probResp.data as Record<string, unknown>) || {};
       problem = {
-        id: String(probData.id || flags["problem-id"]),
+        id: String(probData.id || problemId),
         title: (probData.attributes as Record<string, unknown>)?.title,
       };
     }
@@ -122,7 +126,7 @@ export default class ProblemUpdate extends BaseCommand {
         const paResp = await this.client.request(
           "GET",
           "/api/v1/problem_answers",
-          { params: { "filter[problem_id]": flags["problem-id"] } },
+          { params: { "filter[problem_id]": problemId } },
         );
         const paList =
           (paResp.data as Array<Record<string, unknown>> | undefined) || [];
@@ -143,7 +147,7 @@ export default class ProblemUpdate extends BaseCommand {
               {
                 attributes: {
                   code: flags["sample-answer"],
-                  problem_id: flags["problem-id"],
+                  problem_id: problemId,
                 },
               },
             ],
@@ -163,7 +167,7 @@ export default class ProblemUpdate extends BaseCommand {
       try {
         const probResp2 = await this.client.request(
           "GET",
-          `/api/v1/problems/${flags["problem-id"]}`,
+          `/api/v1/problems/${problemId}`,
           { params: { include: "descriptive_criterium" } },
         );
         const included =
@@ -206,7 +210,7 @@ export default class ProblemUpdate extends BaseCommand {
             data_to_destroy: [],
           });
         } else {
-          dcAttrs.problem_id = flags["problem-id"];
+          dcAttrs.problem_id = problemId;
           await this.client.doManyDescriptiveCriteria({
             data_to_create: [{ attributes: dcAttrs }],
             data_to_update: [],

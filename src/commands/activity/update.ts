@@ -1,4 +1,4 @@
-import { Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 
 import { buildJsonApiPayload, extractSingle } from "../../api/models.js";
 import { BaseCommand } from "../../base-command.js";
@@ -7,15 +7,19 @@ export default class ActivityUpdate extends BaseCommand {
   static description = "활동(Activity)을 수정합니다.";
 
   static examples = [
+    "<%= config.bin %> <%= command.id %> 456 --name '수정된 활동명'",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --name '수정된 활동명'",
-    "<%= config.bin %> <%= command.id %> --activity-id 456 --depth 2",
-    "<%= config.bin %> <%= command.id %> --activity-id 456 --tag-ids ''  # 태그 전체 삭제",
+    "<%= config.bin %> <%= command.id %> 456 --depth 2",
+    "<%= config.bin %> <%= command.id %> 456 --tag-ids ''  # 태그 전체 삭제",
   ];
+
+  static args = {
+    id: Args.string({ description: "활동 ID" }),
+  };
 
   static flags = {
     "activity-id": Flags.string({
-      required: true,
-      description: "수정할 활동 ID",
+      description: "수정할 활동 ID (또는 첫 번째 인자로 전달)",
     }),
     name: Flags.string({
       description: "활동 이름 (최대 64자)",
@@ -30,7 +34,12 @@ export default class ActivityUpdate extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(ActivityUpdate);
+    const { args, flags } = await this.parse(ActivityUpdate);
+    const activityId = args.id ?? flags["activity-id"];
+    if (!activityId) {
+      this.error("활동 ID를 인자 또는 --activity-id로 지정하세요.", { exit: 1 });
+    }
+
     const attrs: Record<string, unknown> = {};
 
     if (flags.name !== undefined) attrs.name = flags.name;
@@ -46,13 +55,9 @@ export default class ActivityUpdate extends BaseCommand {
       return;
     }
 
-    const payload = buildJsonApiPayload(
-      "activities",
-      attrs,
-      flags["activity-id"],
-    );
+    const payload = buildJsonApiPayload("activities", attrs, activityId);
     const response = await this.client.updateActivity(
-      flags["activity-id"],
+      activityId,
       payload as Record<string, unknown>,
     );
     const activity = extractSingle(response);
