@@ -43,7 +43,7 @@ export class ClaudeRunner {
     // --allowed-tools만으로는 CLI의 존재를 알 수 없으므로 프롬프트에 context를 주입한다.
     // 구체적인 커맨드 구조를 제공하여 --help 탐색 없이 바로 실행하도록 유도한다.
     const systemPrompt =
-      `You have the "codle" CLI. CODLE_TOKEN is already set. Output is JSON. ` +
+      `You have the "codle" CLI. Authentication is already configured. Output is JSON. ` +
       `Commands: codle material search|get|create|update|duplicate, ` +
       `codle activity create|update|delete|duplicate|set-flow|set-branch, ` +
       `codle activitiable update, codle problem create|update|delete, ` +
@@ -75,7 +75,6 @@ export class ClaudeRunner {
           env: {
             ...process.env,
             CLAUDECODE: undefined,
-            CODLE_TOKEN: this.accessToken,
             PATH: `${codleBinDir}:${process.env.PATH ?? ""}`,
           },
           stdio: ["ignore", "pipe", "pipe"],

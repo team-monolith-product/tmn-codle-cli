@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
+import { save, clear } from "../src/auth/token-manager.js";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_DIR = resolve(SCRIPT_DIR, "..");
@@ -95,6 +96,18 @@ export async function setup(): Promise<void> {
 
   const codleBin = resolve(PROJECT_DIR, "bin", "run.js");
 
+  // AIDEV-NOTE: --token 플래그 제거 이후, E2E에서는 credential 파일에 직접 저장하여 CLI가 인식하도록 한다.
+  const clientId = requireEnv("E2E_USER_CLIENT_ID");
+  save({
+    auth_server_url: `https://user.${tenantNumber}.e2e.codle.io`,
+    client_id: clientId,
+    access_token: accessToken,
+    refresh_token: "",
+    scope: "public",
+    created_at: Math.floor(Date.now() / 1000),
+    expires_in: 3600,
+  });
+
   writeFileSync(
     TMP_CONFIG,
     JSON.stringify(
@@ -116,4 +129,5 @@ export function teardown(): void {
   } catch {
     /* already removed */
   }
+  clear();
 }
