@@ -6,8 +6,10 @@ oclif 기반 CLI. AI 에이전트(Claude Code)가 bash로 `codle <command>` 를 
 
 ```
 src/
-├── base-command.ts          # 공통 플래그(--token, --api-url), CodleClient 생성, JSON 출력, 에러 핸들링
+├── base-command.ts          # 공통 플래그(--api-url), credential 로드, CodleClient 생성, 에러 핸들링
+├── auth/                    # OAuth 인증 (login/logout/status, PKCE, 토큰 암호화 저장/갱신)
 ├── commands/                # oclif 커맨드 (비즈니스 로직 직접 포함)
+│   ├── auth/                # 인증 관리 (login, logout, status)
 │   ├── material/            # 자료 CRUD + 검색
 │   ├── activity/            # 활동 CRUD + 코스흐름/갈림길
 │   ├── activitiable/        # activitiable 속성 업데이트 (Board, Sheet, Embedded, Video)
@@ -27,7 +29,7 @@ src/
 ## 설계 원칙
 
 - **API 계약 준수**: `/api/v1/*` 엔드포인트만 사용. `/admin/v1/*`은 절대 사용 불가.
-- **인증**: `--token` 플래그 또는 `CODLE_TOKEN` 환경변수로 Bearer 토큰 전달.
+- **인증**: `codle auth login`으로 OAuth 로그인. 토큰은 `~/.config/codle/`에 암호화 저장, 401 시 자동 갱신.
 - **컨텍스트 절약**: command description에 중복·내부 구현 정보를 넣지 않는다.
 
 ## 수정 원칙
