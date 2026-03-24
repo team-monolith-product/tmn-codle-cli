@@ -16,7 +16,15 @@ vi.mock("../src/api/client.js", () => ({
   CodleClient: vi.fn(() => mockClient),
 }));
 vi.mock("../src/auth/token-manager.js", () => ({
-  load: () => ({ access_token: "test-token", auth_server_url: "", client_id: "", refresh_token: "", scope: "public", created_at: 0, expires_in: 99999 }),
+  load: () => ({
+    access_token: "test-token",
+    auth_server_url: "",
+    client_id: "",
+    refresh_token: "",
+    scope: "public",
+    created_at: 0,
+    expires_in: 99999,
+  }),
 }));
 
 import ActivityCreate from "../src/commands/activity/create.js";
