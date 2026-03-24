@@ -26,16 +26,16 @@ AI Agent (Claude Code 등)
 codle --help
 ```
 
-| Topic | 설명 |
-| ----- | ---- |
-| `material` | 자료 검색, 조회, 생성, 수정, 복제 |
-| `activity` | 활동 CRUD, 코스 흐름, 갈림길 설정 |
-| `activitiable` | 활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video) |
-| `problem` | 문제 CRUD |
-| `problem-collection` | ProblemCollection 문제 목록 동기화 |
-| `tag` | 태그 검색 |
-| `html-activity-page` | 교안 페이지 동기화 |
-| `docs` | 문서 및 가이드 출력 |
+| Topic                | 설명                                                      |
+| -------------------- | --------------------------------------------------------- |
+| `material`           | 자료 검색, 조회, 생성, 수정, 복제                         |
+| `activity`           | 활동 CRUD, 코스 흐름, 갈림길 설정                         |
+| `activitiable`       | 활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video) |
+| `problem`            | 문제 CRUD                                                 |
+| `problem-collection` | ProblemCollection 문제 목록 동기화                        |
+| `tag`                | 태그 검색                                                 |
+| `html-activity-page` | 교안 페이지 동기화                                        |
+| `docs`               | 문서 및 가이드 출력                                       |
 
 ## E2E 테스트
 
