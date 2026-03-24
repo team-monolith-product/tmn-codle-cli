@@ -4,7 +4,7 @@ import { BaseCommand } from "../../base-command.js";
 
 export default class ActivitySetBranch extends BaseCommand {
   static description =
-    "갈림길 transition을 설정합니다. 분기점 활동에서 레벨별(mid 필수, low/high 선택) 활동으로 분기합니다.";
+    "갈림길을 설정합니다. 분기점 활동에서 레벨별(mid 필수, low/high 선택) 활동으로 분기합니다.";
 
   static examples = [
     "<%= config.bin %> <%= command.id %> --material-id 1 --branch-from 50 --mid-activity-id 51 --low-activity-id 52",
