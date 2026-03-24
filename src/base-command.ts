@@ -1,14 +1,16 @@
 import { Command, Flags } from "@oclif/core";
 import { CodleClient } from "./api/client.js";
 import { CodleAPIError } from "./api/errors.js";
+import { load, refresh, type StoredCredentials } from "./auth/token-manager.js";
+import { fetchMetadata } from "./auth/metadata.js";
 import { config } from "./config.js";
 
 export abstract class BaseCommand extends Command {
   static baseFlags = {
     token: Flags.string({
       env: "CODLE_TOKEN",
-      required: true,
-      description: "API 접근 토큰",
+      required: false,
+      description: "API 접근 토큰 (미설정 시 저장된 인증 정보 사용)",
     }),
     "api-url": Flags.string({
       env: "CODLE_API_URL",
@@ -18,14 +20,51 @@ export abstract class BaseCommand extends Command {
   };
 
   protected client!: CodleClient;
+  private storedCredentials?: StoredCredentials;
 
   public async init(): Promise<void> {
     await super.init();
     const { flags } = await this.parse();
+
+    let token = flags.token as string | undefined;
+    let onUnauthorized: (() => Promise<string>) | undefined;
+
+    if (!token) {
+      const credentials = load();
+      if (!credentials) {
+        this.error("인증 정보가 없습니다. `codle auth login`을 실행하세요.", { exit: 1 });
+        return; // unreachable, but satisfies TS null check
+      }
+      token = credentials.access_token;
+      this.storedCredentials = credentials;
+      onUnauthorized = () => this.refreshToken();
+    }
+
     this.client = new CodleClient(
-      flags.token as string,
+      token,
       flags["api-url"] as string,
+      onUnauthorized,
     );
+  }
+
+  private async refreshToken(): Promise<string> {
+    if (!this.storedCredentials) {
+      throw new Error("세션 만료. `codle auth login`으로 다시 로그인하세요.");
+    }
+
+    const metadata = await fetchMetadata(this.storedCredentials.auth_server_url);
+    const updated = await refresh(
+      metadata.token_endpoint,
+      this.storedCredentials.client_id,
+      this.storedCredentials.refresh_token,
+    );
+
+    if (!updated) {
+      throw new Error("세션 만료. `codle auth login`으로 다시 로그인하세요.");
+    }
+
+    this.storedCredentials = updated;
+    return updated.access_token;
   }
 
   protected output(data: unknown): void {
