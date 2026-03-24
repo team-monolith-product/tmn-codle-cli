@@ -123,7 +123,7 @@ export function expectCodleCommand(
 }
 
 // ---------------------------------------------------------------------------
-// Legacy MCP helpers (kept for backward compat)
+// Legacy helpers (kept for backward compat)
 // ---------------------------------------------------------------------------
 
 /** name으로 첫 번째 매칭되는 tool interaction을 찾는다. */
@@ -144,7 +144,7 @@ export function findAllToolResults(
 
 /**
  * tool result content에서 텍스트를 추출한다.
- * MCP tool result는 [{"type":"text","text":"..."}] 배열 형태로 올 수 있다.
+ * tool result가 [{"type":"text","text":"..."}] 배열 형태로 올 수 있다.
  */
 export function extractText(result: ToolResult): string {
   const content = result.content;

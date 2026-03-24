@@ -1,50 +1,53 @@
-# Codle MCP Server
+# Codle CLI
 
-사내 이용자(고객팀, 컨텐츠팀)를 위한 Codle MCP 서버.
-Claude Desktop/Code에서 자연어로 Codle 자료를 조회/생성/수정할 수 있다.
+사내 이용자(고객팀, 컨텐츠팀)를 위한 Codle CLI.
+AI 에이전트(Claude Code 등)가 bash로 자료를 조회/생성/수정할 수 있다.
 
-> 설치/설정 가이드: [SETUP.md](SETUP.md)
+## 설치
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/team-monolith-product/tmn-codle-mcp/main/install.sh" | bash
+export CODLE_TOKEN="your-token"
+```
 
 ## 아키텍처
 
 ```
-Claude Desktop/Code
-  └─ MCP Protocol (Streamable HTTP)
-       └─ codle-mcp (이 서버, Node.js)
-            └─ HTTP/fetch (JSON:API)
-                 └─ jce-class-rails (/api/v1/*)
-                      └─ user-rails (토큰 검증)
+AI Agent (Claude Code 등)
+  └─ bash: codle <command> [flags]
+       └─ HTTP/fetch (JSON:API)
+            └─ jce-class-rails (/api/v1/*)
+                 └─ user-rails (토큰 검증)
 ```
 
-### 엔드포인트별 인증 (Rails 소스 기준)
+## 커맨드 목록
 
-| 엔드포인트           | 인증 방식               | MCP 사용 |
-| -------------------- | ----------------------- | -------- |
-| `/api/v1/materials`  | `authorize_user_token!` | O        |
-| `/api/v1/activities` | `authorize_user_token!` | O        |
-| `/api/v1/tags`       | 인증 없음 (public)      | O        |
+```bash
+codle --help
+```
+
+| Topic | 설명 |
+| ----- | ---- |
+| `material` | 자료 검색, 조회, 생성, 수정, 복제 |
+| `activity` | 활동 CRUD, 코스 흐름, 갈림길 설정 |
+| `activitiable` | 활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video) |
+| `problem` | 문제 CRUD |
+| `problem-collection` | ProblemCollection 문제 목록 동기화 |
+| `tag` | 태그 검색 |
+| `html-activity-page` | 교안 페이지 동기화 |
+| `docs` | 문서 및 가이드 출력 |
 
 ## E2E 테스트
 
-자연어 프롬프트가 올바른 MCP tool call을 트리거하는지 검증하는 테스트가 있다.
-도구 스키마나 description 변경 시 실행한다.
+자연어 프롬프트가 올바른 CLI bash 호출을 트리거하는지 검증하는 테스트.
+커맨드 인터페이스(flags, description, examples) 변경 시 실행한다.
 
 > 상세 가이드: [e2e/README.md](e2e/README.md)
 
-### `/e2e-report` 스킬
-
-Claude Code 스킬로 E2E 테스트 실행 및 PR 코멘트 포스팅을 자동화한다.
-도구 스키마·description 변경 시 `/e2e-report`를 실행하면 테스트 통계가 PR 코멘트에 첨부된다.
-
-> 스킬 정의: [.claude/skills/e2e-report/SKILL.md](.claude/skills/e2e-report/SKILL.md)
-
 ## 디버깅
 
-Claude Code에서는 stderr가 MCP 서버 로그 파일로 리다이렉트된다:
+CLI 로그는 stderr로 출력된다:
 
 ```bash
-# Claude Code MCP 로그 위치
-tail -f ~/.claude/logs/mcp-server-codle.log
+CODLE_LOG_LEVEL=DEBUG codle tag search 파이썬 2>debug.log
 ```
-
-Claude Desktop은 `~/Library/Logs/Claude/` 하위에서 확인할 수 있다.
