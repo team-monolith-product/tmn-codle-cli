@@ -35,12 +35,12 @@ codle activity create --material-id 1 --name "퀴즈" --activity-type Quiz
 
 ## 문제 해결
 
-| 증상                       | 원인           | 해결                                   |
-| -------------------------- | -------------- | -------------------------------------- |
-| `command not found: codle` | PATH 미설정    | `export PATH="$HOME/.local/bin:$PATH"` |
-| `인증 정보가 없습니다`     | 미로그인       | `codle auth login` 실행               |
-| `API 에러 (401)`           | 세션 만료      | `codle auth login`으로 재로그인        |
-| `API 에러 (404)`           | URL 오류       | `CODLE_API_URL` 확인                   |
+| 증상                       | 원인        | 해결                                   |
+| -------------------------- | ----------- | -------------------------------------- |
+| `command not found: codle` | PATH 미설정 | `export PATH="$HOME/.local/bin:$PATH"` |
+| `인증 정보가 없습니다`     | 미로그인    | `codle auth login` 실행                |
+| `API 에러 (401)`           | 세션 만료   | `codle auth login`으로 재로그인        |
+| `API 에러 (404)`           | URL 오류    | `CODLE_API_URL` 확인                   |
 
 ## 업데이트
 
