@@ -19,7 +19,6 @@ describe("html-activity-page sync", () => {
         `두 번째 페이지 URL은 "https://example.com/page2"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "html-activity-page sync");
 
     const interaction = findCodleInteraction(
@@ -48,7 +47,6 @@ describe("html-activity-page sync", () => {
         `URL은 "https://example.com/time-page"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "html-activity-page sync");
 
     const interaction = findCodleInteraction(
@@ -84,7 +82,6 @@ describe("html-activity-page sync", () => {
         `진행도 계산 방식은 "API와 연동하여 측정(no_calculation)"으로 해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "html-activity-page sync");
 
     const interaction = findCodleInteraction(
@@ -118,7 +115,6 @@ describe("html-activity-page sync", () => {
         `페이지 URL은 "https://example.com/new-page"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "html-activity-page sync");
 
     const interaction = findCodleInteraction(

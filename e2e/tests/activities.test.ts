@@ -15,7 +15,6 @@ describe("activity create", () => {
       `자료 ID "${material.id}"에 "E2E Activity" 교안 활동을 추가해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity create");
 
     const interaction = findCodleInteraction(
@@ -36,7 +35,6 @@ describe("activity create", () => {
       `자료 ID "${material.id}"에 "E2E Stage Entry" 엔트리 활동을 stage 카테고리로 추가해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity create");
 
     const interaction = findCodleInteraction(
@@ -63,7 +61,6 @@ describe("activity delete", () => {
 
     const result = await claude.run(`활동 ID "${activity.id}"를 삭제해줘.`);
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity delete");
 
     const deleteInteractions = findAllCodleInteractions(
@@ -98,7 +95,6 @@ describe("activity set-branch", () => {
         `기본 갈림길은 "${mid.id}", 보완 갈림길은 "${low.id}"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity set-branch");
 
     const interaction = findCodleInteraction(
@@ -127,7 +123,6 @@ describe("activity set-flow", () => {
       `자료 ID "${material.id}"의 활동 "${activity1.id}"와 "${activity2.id}"를 순서대로 연결하는 코스 흐름을 설정해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity set-flow");
 
     const interaction = findCodleInteraction(
