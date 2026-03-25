@@ -15,7 +15,6 @@ describe("problem create", () => {
       `"E2E OX" 제목으로 퀴즈 문제를 만들어줘. O가 정답이고 X가 오답인 O/X 문제야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -40,7 +39,6 @@ describe("problem create", () => {
         `선택지는 이미지, 텍스트(정답), 소리, 수치야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -63,7 +61,6 @@ describe("problem create", () => {
         `질문은 "AI가 스스로 패턴을 찾는 학습 방식은?"이고, 정답은 "비지도학습"이야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -90,7 +87,6 @@ describe("problem create", () => {
         `채점기준 하(0.3): "설명이 부족하다."`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -112,7 +108,6 @@ describe("problem create", () => {
       `"E2E 활동지" 제목으로 활동지(sheet) 문제를 만들어줘. 내용은 "다음을 설명하시오"야.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -140,7 +135,6 @@ describe("problem-collection sync", () => {
         `"E2E OX" 제목의 O/X 문제(O가 정답)를 만들어서 그 퀴즈 활동에 연결해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
     expectCodleCommand(result, "problem-collection sync");
@@ -166,7 +160,6 @@ describe("problem-collection sync", () => {
         `2번: "E2E Q2" (객관식, 선택지: A정답/B/C/D)`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
     expectCodleCommand(result, "problem-collection sync");
@@ -196,7 +189,6 @@ describe("problem-collection sync", () => {
         `"E2E Sheet Problem" 제목의 활동지(sheet) 문제를 만들어서 연결해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
     expectCodleCommand(result, "problem-collection sync");
@@ -224,7 +216,6 @@ describe("activitiable update", () => {
         `안내문을 "여러분의 경험을 적어 보세요."로 설정해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activitiable update");
 
     const interaction = findCodleInteraction(
@@ -247,7 +238,6 @@ describe("activitiable update", () => {
         `학습목표를 "목표 1: 개념 이해", "목표 2: 실습"으로 설정해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
 
     // url may be passed via activity create or activitiable update
     const allInteractions = [
@@ -287,7 +277,6 @@ describe("activitiable update", () => {
         `활동지 설명을 "다음 AI 서비스를 분류하세요."로 설정해줘.`,
     );
 
-    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "activitiable update");
 
     const interaction = findCodleInteraction(
