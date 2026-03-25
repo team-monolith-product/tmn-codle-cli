@@ -13,6 +13,7 @@ describe("sheet-directives docs", () => {
         `- 선택지: 사과, 바나나, 포도`,
     );
 
+    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
@@ -38,6 +39,7 @@ describe("sheet-directives docs", () => {
         `- 자기평가: labels는 "잘함,보통,노력필요", 질문은 "적극적으로 참여했다"와 "의견을 존중했다"`,
     );
 
+    expect(result.errors).toHaveLength(0);
     expectCodleCommand(result, "problem create");
 
     const interaction = findCodleInteraction(
