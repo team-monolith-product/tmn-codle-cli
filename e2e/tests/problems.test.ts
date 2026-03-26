@@ -124,9 +124,9 @@ describe("problem create", () => {
   });
 });
 
-// ===== problem-collection sync =====
+// ===== activity set-problems =====
 
-describe("problem-collection sync", () => {
+describe("activity set-problems", () => {
   test("퀴즈 활동에 문제 연결", async ({ claude, factory }) => {
     const material = await createMaterial(factory);
 
@@ -137,11 +137,11 @@ describe("problem-collection sync", () => {
 
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
-    expectCodleCommand(result, "problem-collection sync");
+    expectCodleCommand(result, "activity set-problems");
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem-collection sync",
+      "activity set-problems",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
@@ -162,7 +162,7 @@ describe("problem-collection sync", () => {
 
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
-    expectCodleCommand(result, "problem-collection sync");
+    expectCodleCommand(result, "activity set-problems");
 
     const problemCreates = findAllCodleInteractions(
       result.toolInteractions,
@@ -172,7 +172,7 @@ describe("problem-collection sync", () => {
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem-collection sync",
+      "activity set-problems",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);
@@ -191,11 +191,11 @@ describe("problem-collection sync", () => {
 
     expectCodleCommand(result, "activity create");
     expectCodleCommand(result, "problem create");
-    expectCodleCommand(result, "problem-collection sync");
+    expectCodleCommand(result, "activity set-problems");
 
     const interaction = findCodleInteraction(
       result.toolInteractions,
-      "problem-collection sync",
+      "activity set-problems",
     );
     expect(interaction?.result).toBeDefined();
     expect(interaction!.result!.isError).toBe(false);

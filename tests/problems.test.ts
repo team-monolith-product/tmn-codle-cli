@@ -42,7 +42,7 @@ vi.mock("../src/lexical/index.js", () => ({
 import ProblemCreate from "../src/commands/problem/create.js";
 import ProblemUpdate from "../src/commands/problem/update.js";
 import ProblemDelete from "../src/commands/problem/delete.js";
-import ProblemCollectionSync from "../src/commands/problem-collection/sync.js";
+import ActivitySetProblems from "../src/commands/activity/set-problems.js";
 import ActivitiableUpdate from "../src/commands/activitiable/update.js";
 import { runCommand } from "./run-command.js";
 
@@ -273,7 +273,7 @@ describe("problem collection sync", () => {
     mockClient.request.mockResolvedValue(makeActivityWithPcps("pc1", []));
     mockClient.doManyPCP.mockResolvedValue({});
 
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -304,7 +304,7 @@ describe("problem collection sync", () => {
     mockClient.doManyPCP.mockResolvedValue({});
 
     // Reverse order
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -336,7 +336,7 @@ describe("problem collection sync", () => {
     mockClient.doManyPCP.mockResolvedValue({});
 
     // Remove p2, add p4, keep p1 and p3
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -361,7 +361,7 @@ describe("problem collection sync", () => {
   it("PC 없는 활동 → 에러", async () => {
     mockClient.request.mockResolvedValue(makeActivityWithPcps(null, []));
 
-    await runCommand(ProblemCollectionSync, [
+    await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -379,7 +379,7 @@ describe("problem collection sync", () => {
     );
     mockClient.doManyPCP.mockResolvedValue({});
 
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -402,7 +402,7 @@ describe("problem collection sync", () => {
       ]),
     );
 
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -416,7 +416,7 @@ describe("problem collection sync", () => {
     mockClient.request.mockResolvedValue(makeActivityWithPcps("pc1", []));
     mockClient.doManyPCP.mockResolvedValue({});
 
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
@@ -443,7 +443,7 @@ describe("problem collection sync", () => {
     );
     mockClient.doManyPCP.mockResolvedValue({});
 
-    const output = await runCommand(ProblemCollectionSync, [
+    const output = await runCommand(ActivitySetProblems, [
       "--activity-id",
       "1",
       "--problems",
