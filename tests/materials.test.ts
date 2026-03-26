@@ -249,11 +249,7 @@ describe("material update", () => {
       makeJsonApiResponse("material", "1", { name: "수정됨" }),
     );
 
-    const output = await runCommand(MaterialUpdate, [
-      "1",
-      "--name",
-      "수정됨",
-    ]);
+    const output = await runCommand(MaterialUpdate, ["1", "--name", "수정됨"]);
     const parsed = JSON.parse(output);
     expect(parsed.name).toBe("수정됨");
   });
