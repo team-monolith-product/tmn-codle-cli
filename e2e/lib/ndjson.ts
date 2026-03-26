@@ -51,9 +51,16 @@ function isCodleBashCall(call: ToolCall): boolean {
 /** Check whether a bash command string matches a codle subcommand pattern. */
 function matchesCodleSubcommand(command: string, subcommand: string): boolean {
   // "material search" -> matches "codle material search ..." or "codle material:search ..."
+  // AIDEV-NOTE: oclif는 하이픈을 스페이스로 대체해도 라우팅한다.
+  // AI가 "problem collection sync" (하이픈 없이)로 호출하는 경우도 매칭한다.
   const spaced = `codle ${subcommand}`;
   const coloned = `codle ${subcommand.replace(/ /g, ":")}`;
-  return command.includes(spaced) || command.includes(coloned);
+  const dehyphenated = `codle ${subcommand.replace(/-/g, " ")}`;
+  return (
+    command.includes(spaced) ||
+    command.includes(coloned) ||
+    command.includes(dehyphenated)
+  );
 }
 
 /** Find last bash tool interaction where the command contains the given codle subcommand.
