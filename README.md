@@ -1,6 +1,6 @@
 # Contributing
 
-개발자를 위한 가이드. 사용자 설치/설정은 [README.md](README.md) 참조.
+개발자를 위한 가이드. 사용자 설치/설정은 [SETUP.md](SETUP.md) 참조.
 
 ## 개발 환경 설정
 
