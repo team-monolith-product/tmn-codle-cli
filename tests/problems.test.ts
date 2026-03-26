@@ -143,12 +143,7 @@ describe("problem create", () => {
       new CodleAPIError(422, "Validation failed"),
     );
 
-    await runCommand(ProblemCreate, [
-      "--title",
-      "실패",
-      "--type",
-      "quiz",
-    ]);
+    await runCommand(ProblemCreate, ["--title", "실패", "--type", "quiz"]);
     expect(mockClient.createProblem).toHaveBeenCalled();
   });
 
@@ -172,11 +167,7 @@ describe("problem update", () => {
       makeJsonApiResponse("problem", "10", { title: "수정됨" }),
     );
 
-    const output = await runCommand(ProblemUpdate, [
-      "10",
-      "--title",
-      "수정됨",
-    ]);
+    const output = await runCommand(ProblemUpdate, ["10", "--title", "수정됨"]);
     const parsed = JSON.parse(output);
     expect(parsed.title).toBe("수정됨");
   });

@@ -329,11 +329,7 @@ describe("activity update", () => {
     mockClient.updateActivity.mockResolvedValue(
       makeJsonApiResponse("activity", "1", { name: "test", depth: 0 }),
     );
-    const output = await runCommand(ActivityUpdate, [
-      "1",
-      "--depth",
-      "0",
-    ]);
+    const output = await runCommand(ActivityUpdate, ["1", "--depth", "0"]);
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe("1");
   });
@@ -342,11 +338,7 @@ describe("activity update", () => {
     mockClient.updateActivity.mockResolvedValue(
       makeJsonApiResponse("activity", "1", { name: "새이름", depth: 0 }),
     );
-    const output = await runCommand(ActivityUpdate, [
-      "1",
-      "--name",
-      "새이름",
-    ]);
+    const output = await runCommand(ActivityUpdate, ["1", "--name", "새이름"]);
     const parsed = JSON.parse(output);
     expect(parsed.name).toBe("새이름");
   });
