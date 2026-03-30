@@ -100,7 +100,7 @@ export class CodleClient {
 
     if (!response.ok) {
       // AIDEV-NOTE: 401 시 onUnauthorized 콜백으로 토큰 갱신 후 1회 재시도.
-      // 저장된 credential 사용 시에만 활성화됨 (--token 플래그 시 비활성).
+      // BaseCommand가 credential 로드 시 콜백을 주입한다.
       if (response.status === 401 && this.onUnauthorized && !isRetry) {
         logger.debug("401 수신, 토큰 갱신 시도...");
         const newToken = await this.onUnauthorized();
