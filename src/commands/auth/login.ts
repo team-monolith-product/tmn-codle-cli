@@ -3,7 +3,7 @@ import { config } from "../../config.js";
 import { login } from "../../auth/oauth-flow.js";
 
 export default class AuthLogin extends Command {
-  static override description = "브라우저 OAuth 로그인으로 인증 토큰 획득";
+  static override description = "로그인";
 
   static override examples = ["<%= config.bin %> auth login"];
 

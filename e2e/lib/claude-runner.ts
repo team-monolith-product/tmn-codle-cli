@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseNdjson, type ClaudeResult, type UsageStats } from "./ndjson.js";
 
@@ -98,9 +99,8 @@ export class ClaudeRunner {
         const stderr = Buffer.concat(stderrChunks).toString("utf-8");
         // DEBUG: raw ndjson dump
         if (process.env.E2E_DEBUG) {
-          const fs = require("fs");
           const debugPath = `/tmp/e2e-debug-${Date.now()}.ndjson`;
-          fs.writeFileSync(debugPath, stdout);
+          writeFileSync(debugPath, stdout);
           console.error(`[DEBUG] raw ndjson saved to ${debugPath}`);
         }
         const result = parseNdjson(stdout, code ?? 1, stderr);

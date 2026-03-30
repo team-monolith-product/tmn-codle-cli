@@ -72,6 +72,9 @@ export function startCallbackServer(): Promise<CallbackServer> {
       if (!code || !state) {
         res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
         res.end(ERROR_HTML);
+        clearTimeout(timeout);
+        server.close();
+        callbackReject(new Error("OAuth 콜백에 code 또는 state가 누락되었습니다."));
         return;
       }
 
