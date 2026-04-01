@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { parseNdjson, type ClaudeResult, type UsageStats } from "./ndjson.js";
 
@@ -40,9 +41,8 @@ export class ClaudeRunner {
     const codleBinDir = dirname(this.codleBin);
 
     // AIDEV-NOTE: CLI의 존재만 알려준다. 플래그 등 상세는 AI가 --help로 탐색.
-    // MCP에서 tool schema가 자동 제공되듯, CLI에서는 --help가 그 역할을 한다.
     const systemPrompt =
-      `You have the "codle" CLI. CODLE_TOKEN is already set. Output is JSON. ` +
+      `You have the "codle" CLI. Authentication is already configured. Output is JSON. ` +
       `Do not explore the codebase.`;
 
     const fullPrompt = `${systemPrompt}\n\n${prompt}`;
@@ -56,6 +56,7 @@ export class ClaudeRunner {
           "--output-format",
           "stream-json",
           "--verbose",
+          "--strict-mcp-config",
           "--allowed-tools",
           "Bash",
           "--max-budget-usd",
@@ -69,7 +70,6 @@ export class ClaudeRunner {
           env: {
             ...process.env,
             CLAUDECODE: undefined,
-            CODLE_TOKEN: this.accessToken,
             PATH: `${codleBinDir}:${process.env.PATH ?? ""}`,
           },
           stdio: ["ignore", "pipe", "pipe"],
@@ -96,6 +96,12 @@ export class ClaudeRunner {
         clearTimeout(timer);
         const stdout = Buffer.concat(stdoutChunks).toString("utf-8");
         const stderr = Buffer.concat(stderrChunks).toString("utf-8");
+        // DEBUG: raw ndjson dump
+        if (process.env.E2E_DEBUG) {
+          const debugPath = `/tmp/e2e-debug-${Date.now()}.ndjson`;
+          writeFileSync(debugPath, stdout);
+          console.error(`[DEBUG] raw ndjson saved to ${debugPath}`);
+        }
         const result = parseNdjson(stdout, code ?? 1, stderr);
         this.lastCostUsd = result.costUsd;
         this.lastDurationMs = result.durationMs;
