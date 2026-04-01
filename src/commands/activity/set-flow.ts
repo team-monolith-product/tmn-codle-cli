@@ -59,9 +59,17 @@ export default class ActivitySetFlow extends BaseCommand {
       }
     }
 
-    // Step 3: create pairs
+    // Step 3: create pairs (--append 시 기존 transition과 중복되는 pair 제외)
+    const existingPairs = new Set(
+      existingTransitions.map((t) => {
+        const attrs = (t.attributes as Record<string, unknown>) || {};
+        return `${attrs.before_activity_id}:${attrs.after_activity_id}`;
+      }),
+    );
     const dataToCreate: Record<string, unknown>[] = [];
     for (let i = 0; i < activityIds.length - 1; i++) {
+      const key = `${activityIds[i]}:${activityIds[i + 1]}`;
+      if (flags.append && existingPairs.has(key)) continue;
       dataToCreate.push({
         attributes: {
           before_activity_id: activityIds[i],

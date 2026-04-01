@@ -690,6 +690,45 @@ describe("activity set-flow", () => {
     expect(callArgs.data_to_destroy).toBeUndefined();
   });
 
+  it("--append deduplicates existing pairs", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: { id: "1", type: "material", attributes: {} },
+      included: [
+        {
+          id: "existing-t",
+          type: "activity_transition",
+          attributes: {
+            before_activity_id: "10",
+            after_activity_id: "20",
+          },
+        },
+      ],
+    });
+    mockClient.doManyActivityTransitions.mockResolvedValue({});
+
+    const output = await runCommand(ActivitySetFlow, [
+      "--material-id",
+      "1",
+      "--ids",
+      "10",
+      "--ids",
+      "20",
+      "--ids",
+      "30",
+      "--append",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.created).toBe(1);
+
+    const callArgs = mockClient.doManyActivityTransitions.mock.calls[0][0];
+    // 10→20 is already existing, only 20→30 should be created
+    expect(callArgs.data_to_create).toHaveLength(1);
+    expect(callArgs.data_to_create[0].attributes).toEqual({
+      before_activity_id: "20",
+      after_activity_id: "30",
+    });
+  });
+
   it("--append preserves branch transitions too", async () => {
     mockClient.getMaterial.mockResolvedValue({
       data: { id: "1", type: "material", attributes: {} },
