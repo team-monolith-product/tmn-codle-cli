@@ -39,6 +39,7 @@ export default class ProblemUpdate extends BaseCommand {
     }),
     "tag-ids": Flags.string({ description: "태그 ID", multiple: true }),
     "is-public": Flags.boolean({ description: "공개 여부", allowNo: true }),
+    "is-exam": Flags.boolean({ description: "평가용 문제 여부", allowNo: true }),
     commentary: Flags.string({ description: "해설" }),
     "sample-answer": Flags.string({
       description: "모범답안 (descriptive 타입)",
@@ -84,6 +85,7 @@ export default class ProblemUpdate extends BaseCommand {
       attrs.tag_ids = flags["tag-ids"].filter((id) => id !== "");
     }
     if (flags["is-public"] !== undefined) attrs.is_public = flags["is-public"];
+    if (flags["is-exam"] !== undefined) attrs.is_exam = flags["is-exam"];
     // AIDEV-NOTE: commentary는 프론트엔드에서 Lexical JSON으로 렌더링하므로 문자열을 변환해야 한다.
     if (flags.commentary !== undefined)
       attrs.commentary = convertFromMarkdown(flags.commentary);
