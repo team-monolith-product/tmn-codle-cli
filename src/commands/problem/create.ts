@@ -40,7 +40,10 @@ export default class ProblemCreate extends BaseCommand {
     }),
     "tag-ids": Flags.string({ description: "태그 ID", multiple: true }),
     "is-public": Flags.boolean({ description: "공개 여부", allowNo: true }),
-    "is-exam": Flags.boolean({ description: "평가용 문제 여부", allowNo: true }),
+    "is-exam": Flags.boolean({
+      description: "평가용 문제 여부",
+      allowNo: true,
+    }),
     commentary: Flags.string({ description: "해설" }),
     "sample-answer": Flags.string({
       description: "모범답안 (descriptive 타입)",
