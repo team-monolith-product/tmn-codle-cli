@@ -2,7 +2,10 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base-command.js";
 import { extractSingle, buildJsonApiPayload } from "../../api/models.js";
-import { convertFromMarkdown } from "../../lexical/index.js";
+import {
+  convertFromMarkdown,
+  resolveLocalImages,
+} from "../../lexical/index.js";
 
 export default class MaterialCreate extends BaseCommand {
   static description = "새 자료(Material)를 생성합니다.";
@@ -34,7 +37,14 @@ export default class MaterialCreate extends BaseCommand {
     };
 
     if (flags["tag-ids"]?.length) attrs.tag_ids = flags["tag-ids"];
-    if (flags.body !== undefined) attrs.body = convertFromMarkdown(flags.body);
+    if (flags.body !== undefined) {
+      const body = await resolveLocalImages(
+        flags.body,
+        this.client,
+        process.cwd(),
+      );
+      attrs.body = convertFromMarkdown(body);
+    }
 
     const payload = buildJsonApiPayload("materials", attrs);
     const response = await this.client.createMaterial(

@@ -7,6 +7,7 @@ import {
   buildInputBlock,
   buildSelectBlock,
   convertFromMarkdown,
+  resolveLocalImages,
 } from "../../lexical/index.js";
 
 export default class ProblemUpdate extends BaseCommand {
@@ -65,18 +66,32 @@ export default class ProblemUpdate extends BaseCommand {
       ? this.parseJsonFlag("criteria", flags.criteria)
       : undefined;
 
+    // AIDEV-NOTE: markdown 본문의 로컬 이미지 경로를 업로드한 뒤 blob URL로 치환. create와 동일 패턴.
+    const content =
+      flags.content !== undefined
+        ? await resolveLocalImages(flags.content, this.client, process.cwd())
+        : undefined;
+    const commentary =
+      flags.commentary !== undefined
+        ? await resolveLocalImages(
+            flags.commentary,
+            this.client,
+            process.cwd(),
+          )
+        : undefined;
+
     let blocks: unknown | undefined;
     if (choices?.length) {
-      blocks = buildSelectBlock(choices, flags.content);
+      blocks = buildSelectBlock(choices, content);
     } else if (flags.solutions?.length) {
-      blocks = buildInputBlock(flags.solutions, inputOptions, flags.content);
-    } else if (flags.content !== undefined) {
-      blocks = convertFromMarkdown(flags.content);
+      blocks = buildInputBlock(flags.solutions, inputOptions, content);
+    } else if (content !== undefined) {
+      blocks = convertFromMarkdown(content);
     }
 
     const attrs: Record<string, unknown> = {};
     if (flags.title !== undefined) attrs.title = flags.title;
-    if (flags.content !== undefined) attrs.content = flags.content;
+    if (content !== undefined) attrs.content = content;
     if (blocks !== undefined) attrs.blocks = blocks;
     if (flags["tag-ids"] !== undefined) {
       // AIDEV-NOTE: --tag-ids "" (빈 문자열)은 태그 전체 삭제를 의미.
@@ -85,8 +100,8 @@ export default class ProblemUpdate extends BaseCommand {
     }
     if (flags["is-public"] !== undefined) attrs.is_public = flags["is-public"];
     // AIDEV-NOTE: commentary는 프론트엔드에서 Lexical JSON으로 렌더링하므로 문자열을 변환해야 한다.
-    if (flags.commentary !== undefined)
-      attrs.commentary = convertFromMarkdown(flags.commentary);
+    if (commentary !== undefined)
+      attrs.commentary = convertFromMarkdown(commentary);
 
     const hasSideUpdates =
       flags["sample-answer"] !== undefined ||

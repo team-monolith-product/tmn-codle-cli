@@ -2,7 +2,10 @@ import { Args, Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base-command.js";
 import { extractSingle, buildJsonApiPayload } from "../../api/models.js";
-import { convertFromMarkdown } from "../../lexical/index.js";
+import {
+  convertFromMarkdown,
+  resolveLocalImages,
+} from "../../lexical/index.js";
 
 export default class MaterialUpdate extends BaseCommand {
   static description = "자료(Material)를 수정합니다.";
@@ -41,7 +44,14 @@ export default class MaterialUpdate extends BaseCommand {
       // oclif multiple flag는 빈 배열을 표현할 수 없으므로 빈 문자열을 빈 배열로 변환.
       attrs.tag_ids = flags["tag-ids"].filter((id) => id !== "");
     }
-    if (flags.body !== undefined) attrs.body = convertFromMarkdown(flags.body);
+    if (flags.body !== undefined) {
+      const body = await resolveLocalImages(
+        flags.body,
+        this.client,
+        process.cwd(),
+      );
+      attrs.body = convertFromMarkdown(body);
+    }
 
     if (!Object.keys(attrs).length) {
       this.output({ message: "수정할 항목이 없습니다." });

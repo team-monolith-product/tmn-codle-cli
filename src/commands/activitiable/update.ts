@@ -8,7 +8,10 @@ import {
   extractSingle,
 } from "../../api/models.js";
 import { BaseCommand } from "../../base-command.js";
-import { convertFromMarkdown } from "../../lexical/index.js";
+import {
+  convertFromMarkdown,
+  resolveLocalImages,
+} from "../../lexical/index.js";
 
 interface ActivitiableInfo {
   type: string;
@@ -105,8 +108,14 @@ export default class ActivitiableUpdate extends BaseCommand {
       }
       const boardId = String(boards[0].id);
       const attrs: Record<string, unknown> = {};
-      if (flags.content !== undefined)
-        attrs.lexical = convertFromMarkdown(flags.content);
+      if (flags.content !== undefined) {
+        const content = await resolveLocalImages(
+          flags.content,
+          this.client,
+          process.cwd(),
+        );
+        attrs.lexical = convertFromMarkdown(content);
+      }
       if (flags.name !== undefined) attrs.name = flags.name;
       const payload = buildJsonApiPayload("boards", attrs, boardId);
       const response = await this.client.updateBoard(
@@ -122,7 +131,12 @@ export default class ActivitiableUpdate extends BaseCommand {
       if (flags.content === undefined) {
         this.error("SheetActivity: content는 필수입니다.", { exit: 1 });
       }
-      const lexical = convertFromMarkdown(flags.content!);
+      const content = await resolveLocalImages(
+        flags.content!,
+        this.client,
+        process.cwd(),
+      );
+      const lexical = convertFromMarkdown(content);
       const payload = buildJsonApiPayload(
         "sheet_activities",
         { description: lexical },
@@ -147,7 +161,12 @@ export default class ActivitiableUpdate extends BaseCommand {
       const attrs: Record<string, unknown> = {};
       if (flags.url !== undefined) attrs.url = flags.url;
       if (flags.goals !== undefined) {
-        attrs.goals = flags.goals.map((g) => convertFromMarkdown(g));
+        const resolvedGoals = await Promise.all(
+          flags.goals.map((g) =>
+            resolveLocalImages(g, this.client, process.cwd()),
+          ),
+        );
+        attrs.goals = resolvedGoals.map((g) => convertFromMarkdown(g));
       }
       const payload = buildJsonApiPayload(
         "embedded_activities",
