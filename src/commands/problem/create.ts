@@ -66,19 +66,16 @@ export default class ProblemCreate extends BaseCommand {
       ? this.parseJsonFlag("criteria", flags.criteria)
       : undefined;
 
-    // AIDEV-NOTE: markdown 본문의 로컬 이미지 경로(`![](./img.png)`)를 업로드한 뒤 blob URL로 치환.
+    // AIDEV-NOTE: markdown 본문의 로컬 이미지 경로(`![](/abs/path.png)`)를 업로드한 뒤 blob URL로 치환.
     // attrs.content(원본 markdown)와 blocks(Lexical JSON) 모두 같은 URL이 박히도록 변환 전에 수행한다.
+    // 경로는 절대 경로여야 한다 — 상대 경로는 resolveLocalImages가 거절한다.
     const content =
       flags.content !== undefined
-        ? await resolveLocalImages(flags.content, this.client, process.cwd())
+        ? await resolveLocalImages(flags.content, this.client)
         : undefined;
     const commentary =
       flags.commentary !== undefined
-        ? await resolveLocalImages(
-            flags.commentary,
-            this.client,
-            process.cwd(),
-          )
+        ? await resolveLocalImages(flags.commentary, this.client)
         : undefined;
 
     let blocks: unknown | undefined;

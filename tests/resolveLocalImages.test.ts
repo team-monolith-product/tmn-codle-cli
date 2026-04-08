@@ -51,12 +51,12 @@ describe("resolveLocalImages", () => {
   it("leaves markdown unchanged when there are no images", async () => {
     const md = "# Hello\n\nplain text";
     const client = makeMockClient();
-    const result = await resolveLocalImages(md, client, tmpDir);
+    const result = await resolveLocalImages(md, client);
     expect(result).toBe(md);
     expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 
-  it("leaves remote URLs untouched (http/https/data/file/mailto schemes)", async () => {
+  it("leaves URL-scheme srcs untouched (http/https/data/file/mailto)", async () => {
     const md = [
       "![a](https://example.com/a.png)",
       "![b](http://example.com/b.png)",
@@ -65,67 +65,65 @@ describe("resolveLocalImages", () => {
       "![e](mailto:foo@bar)",
     ].join("\n");
     const client = makeMockClient();
-    const result = await resolveLocalImages(md, client, tmpDir);
+    const result = await resolveLocalImages(md, client);
     expect(result).toBe(md);
     expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 
-  it("resolves a relative path against cwd", async () => {
-    makeFile(tmpDir, "diagram.png");
+  it("uploads an absolute path", async () => {
+    const absPath = makeFile(tmpDir, "diagram.png");
     const client = makeMockClient();
-    const md = "![다이어그램](./diagram.png)";
-    const result = await resolveLocalImages(md, client, tmpDir);
+    const md = `![다이어그램](${absPath})`;
+    const result = await resolveLocalImages(md, client);
     expect(result).toBe(
       "![다이어그램](https://class.codle.io/rails/active_storage/blobs/redirect/sid-diagram.png/diagram.png)",
     );
     expect(client.createDirectUpload).toHaveBeenCalledTimes(1);
   });
 
-  it("resolves bare filename and parent-dir relative paths against cwd", async () => {
-    makeFile(tmpDir, "sub/child.png");
-    makeFile(tmpDir, "root.png");
+  it("rejects relative './' paths with a clear error", async () => {
     const client = makeMockClient();
-    const subDir = join(tmpDir, "sub");
-    makeFile(subDir, "sibling.png"); // actually: tmpDir/sub/sibling.png
-
-    // cwd = tmpDir/sub
-    const md =
-      "![a](child.png) ![b](../root.png) ![c](./sibling.png)";
-    const result = await resolveLocalImages(md, makeMockClient(), subDir);
-
-    expect(result).toContain("redirect/sid-child.png/child.png");
-    expect(result).toContain("redirect/sid-root.png/root.png");
-    expect(result).toContain("redirect/sid-sibling.png/sibling.png");
-    expect(result).not.toContain("(child.png)");
-    expect(result).not.toContain("(../root.png)");
+    const md = "![x](./img.png)";
+    await expect(resolveLocalImages(md, client)).rejects.toThrow(
+      /절대 경로.*src="\.\/img\.png"/,
+    );
+    expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 
-  it("resolves absolute paths as-is", async () => {
-    const absPath = makeFile(tmpDir, "cover.jpg");
-    const md = `![커버](${absPath})`;
+  it("rejects bare-filename paths as relative", async () => {
     const client = makeMockClient();
-    const result = await resolveLocalImages(md, client, "/some/unrelated/cwd");
-    expect(result).toContain("redirect/sid-cover.jpg/cover.jpg");
+    const md = "![x](img.png)";
+    await expect(resolveLocalImages(md, client)).rejects.toThrow(
+      /절대 경로.*src="img\.png"/,
+    );
+    expect(client.createDirectUpload).not.toHaveBeenCalled();
+  });
+
+  it("rejects parent-dir relative paths", async () => {
+    const client = makeMockClient();
+    const md = "![x](../img.png)";
+    await expect(resolveLocalImages(md, client)).rejects.toThrow(
+      /절대 경로.*src="\.\.\/img\.png"/,
+    );
+    expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 
   it("preserves alt text after substitution", async () => {
-    makeFile(tmpDir, "img.png");
+    const absPath = makeFile(tmpDir, "img.png");
     const client = makeMockClient();
     const result = await resolveLocalImages(
-      "![매우 길고 한글이 섞인 alt](./img.png)",
+      `![매우 길고 한글이 섞인 alt](${absPath})`,
       client,
-      tmpDir,
     );
     expect(result).toMatch(/^!\[매우 길고 한글이 섞인 alt\]\(/);
   });
 
-  it("uploads multiple local images in parallel and leaves remote ones untouched", async () => {
-    makeFile(tmpDir, "a.png");
-    makeFile(tmpDir, "b.png");
+  it("uploads multiple absolute paths in parallel and leaves remote ones untouched", async () => {
+    const aPath = makeFile(tmpDir, "a.png");
+    const bPath = makeFile(tmpDir, "b.png");
     const client = makeMockClient();
-    const md =
-      "![local a](./a.png) ![remote](https://example.com/r.png) ![local b](./b.png)";
-    const result = await resolveLocalImages(md, client, tmpDir);
+    const md = `![local a](${aPath}) ![remote](https://example.com/r.png) ![local b](${bPath})`;
+    const result = await resolveLocalImages(md, client);
 
     expect(result).toContain("redirect/sid-a.png/a.png");
     expect(result).toContain("redirect/sid-b.png/b.png");
@@ -133,26 +131,37 @@ describe("resolveLocalImages", () => {
     expect(client.createDirectUpload).toHaveBeenCalledTimes(2);
   });
 
-  it("throws with resolved absolute path in the message when file is missing", async () => {
+  it("throws with absolute path in the message when file is missing", async () => {
     const client = makeMockClient();
-    const md = "![x](./nonexistent.png)";
-    await expect(resolveLocalImages(md, client, tmpDir)).rejects.toThrow(
+    const missing = join(tmpDir, "nonexistent.png");
+    const md = `![x](${missing})`;
+    await expect(resolveLocalImages(md, client)).rejects.toThrow(
       new RegExp(
-        `이미지 업로드 실패.*src="\\./nonexistent\\.png".*${tmpDir.replace(
+        `이미지 업로드 실패.*src="${missing.replace(
           /[.*+?^${}()|[\]\\]/g,
           "\\$&",
-        )}`,
+        )}"`,
       ),
     );
   });
 
   it("ignores regular markdown links (no bang prefix)", async () => {
     const client = makeMockClient();
-    const md = "[doc link](./doc.md) and ![](./img.png)";
-    makeFile(tmpDir, "img.png");
-    const result = await resolveLocalImages(md, client, tmpDir);
+    const absPath = makeFile(tmpDir, "img.png");
+    const md = `[doc link](./doc.md) and ![](${absPath})`;
+    const result = await resolveLocalImages(md, client);
     expect(result).toContain("[doc link](./doc.md)");
     expect(result).toContain("redirect/sid-img.png/img.png");
     expect(client.createDirectUpload).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails fast on mixed absolute + relative paths without uploading anything", async () => {
+    const absPath = makeFile(tmpDir, "a.png");
+    const client = makeMockClient();
+    const md = `![a](${absPath}) ![b](./b.png)`;
+    await expect(resolveLocalImages(md, client)).rejects.toThrow(
+      /절대 경로.*src="\.\/b\.png"/,
+    );
+    expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 });

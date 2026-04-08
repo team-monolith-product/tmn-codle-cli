@@ -69,15 +69,11 @@ export default class ProblemUpdate extends BaseCommand {
     // AIDEV-NOTE: markdown 본문의 로컬 이미지 경로를 업로드한 뒤 blob URL로 치환. create와 동일 패턴.
     const content =
       flags.content !== undefined
-        ? await resolveLocalImages(flags.content, this.client, process.cwd())
+        ? await resolveLocalImages(flags.content, this.client)
         : undefined;
     const commentary =
       flags.commentary !== undefined
-        ? await resolveLocalImages(
-            flags.commentary,
-            this.client,
-            process.cwd(),
-          )
+        ? await resolveLocalImages(flags.commentary, this.client)
         : undefined;
 
     let blocks: unknown | undefined;

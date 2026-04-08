@@ -45,11 +45,7 @@ export default class MaterialUpdate extends BaseCommand {
       attrs.tag_ids = flags["tag-ids"].filter((id) => id !== "");
     }
     if (flags.body !== undefined) {
-      const body = await resolveLocalImages(
-        flags.body,
-        this.client,
-        process.cwd(),
-      );
+      const body = await resolveLocalImages(flags.body, this.client);
       attrs.body = convertFromMarkdown(body);
     }
 

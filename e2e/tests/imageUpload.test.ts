@@ -1,3 +1,6 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, test } from "../fixtures/claude.js";
 import {
   expectCodleCommand,
@@ -5,9 +8,10 @@ import {
   parseCodleOutput,
 } from "../lib/ndjson.js";
 
-// AIDEV-NOTE: claude-runner는 projectDir(=worktree 루트)을 cwd로 claude를 실행한다.
-// 프롬프트에 노출하는 상대 경로는 이 cwd 기준이어야 하며, CLI 내부에서 process.cwd()로 resolve된다.
-const FIXTURE_IMAGE_PATH = "./e2e/fixtures/upload-diagram.png";
+// AIDEV-NOTE: CLI의 resolveLocalImages는 절대 경로만 허용한다.
+// 테스트 파일 위치 기준으로 fixture의 절대 경로를 미리 계산해 프롬프트에 전달한다.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FIXTURE_IMAGE_PATH = resolve(__dirname, "../fixtures/upload-diagram.png");
 
 const RAILS_REDIRECT_URL_RE =
   /https?:\/\/[^\s"'()]+\/rails\/active_storage\/blobs\/redirect\/[^\s"'()]+/;

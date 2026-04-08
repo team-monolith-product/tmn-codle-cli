@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `problem create/update`, `material create/update`, `activitiable update` — markdown 본문(`--content`, `--commentary`, `--body`, `--goals`)의 로컬 이미지(`![](./img.png)`, `![](/abs/path.png)`)를 ActiveStorage Direct Upload로 자동 업로드 후 blob redirect URL로 치환
+- `problem create/update`, `material create/update`, `activitiable update` — markdown 본문(`--content`, `--commentary`, `--body`, `--goals`)의 로컬 이미지(`![](/abs/path.png)`)를 ActiveStorage Direct Upload로 자동 업로드 후 blob redirect URL로 치환. 경로는 반드시 절대 경로여야 하며, 상대 경로는 에러로 거절된다 (CLI가 `process.cwd()` 기준으로 resolve하지 않음).
 
 ## [1.2.0] - 2026-04-06
 

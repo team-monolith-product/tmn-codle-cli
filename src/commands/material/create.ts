@@ -38,11 +38,7 @@ export default class MaterialCreate extends BaseCommand {
 
     if (flags["tag-ids"]?.length) attrs.tag_ids = flags["tag-ids"];
     if (flags.body !== undefined) {
-      const body = await resolveLocalImages(
-        flags.body,
-        this.client,
-        process.cwd(),
-      );
+      const body = await resolveLocalImages(flags.body, this.client);
       attrs.body = convertFromMarkdown(body);
     }
 

@@ -109,11 +109,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       const boardId = String(boards[0].id);
       const attrs: Record<string, unknown> = {};
       if (flags.content !== undefined) {
-        const content = await resolveLocalImages(
-          flags.content,
-          this.client,
-          process.cwd(),
-        );
+        const content = await resolveLocalImages(flags.content, this.client);
         attrs.lexical = convertFromMarkdown(content);
       }
       if (flags.name !== undefined) attrs.name = flags.name;
@@ -131,11 +127,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       if (flags.content === undefined) {
         this.error("SheetActivity: content는 필수입니다.", { exit: 1 });
       }
-      const content = await resolveLocalImages(
-        flags.content!,
-        this.client,
-        process.cwd(),
-      );
+      const content = await resolveLocalImages(flags.content!, this.client);
       const lexical = convertFromMarkdown(content);
       const payload = buildJsonApiPayload(
         "sheet_activities",
@@ -162,9 +154,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       if (flags.url !== undefined) attrs.url = flags.url;
       if (flags.goals !== undefined) {
         const resolvedGoals = await Promise.all(
-          flags.goals.map((g) =>
-            resolveLocalImages(g, this.client, process.cwd()),
-          ),
+          flags.goals.map((g) => resolveLocalImages(g, this.client)),
         );
         attrs.goals = resolvedGoals.map((g) => convertFromMarkdown(g));
       }
