@@ -10,6 +10,7 @@ import {
   extractDirectives,
   replaceDirectivePlaceholders,
 } from "./directives.js";
+import { promoteBlockImages } from "./promoteBlockImages.js";
 
 export function convertFromMarkdown(
   markdown: string,
@@ -27,5 +28,6 @@ export function convertFromMarkdown(
   );
 
   const state = editor.getEditorState().toJSON();
-  return replaceDirectivePlaceholders(state, directives);
+  const withDirectives = replaceDirectivePlaceholders(state, directives);
+  return promoteBlockImages(withDirectives);
 }
