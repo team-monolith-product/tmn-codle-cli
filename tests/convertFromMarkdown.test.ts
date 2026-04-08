@@ -41,7 +41,9 @@ describe("convertFromMarkdown", () => {
   });
 
   it("converts an image to a root-level block (CDS ImageNode is block-level)", () => {
-    const result = convertFromMarkdown("![alt text](https://example.com/img.png)");
+    const result = convertFromMarkdown(
+      "![alt text](https://example.com/img.png)",
+    );
     const children = result.root.children as Array<Record<string, unknown>>;
     // image는 paragraph 안이 아니라 root.children 직속이어야 한다.
     expect(children).toHaveLength(1);
