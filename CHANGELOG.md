@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-08
+
+### Added
+
+- `problem create/update`, `material create/update`, `activitiable update` — markdown 본문(`--content`, `--commentary`, `--body`, `--goals`)의 로컬 이미지(`![](./img.png)`, `![](/abs/path.png)`)를 ActiveStorage Direct Upload로 자동 업로드 후 blob redirect URL로 치환
+
 ## [1.2.0] - 2026-04-06
 
 ### Added
