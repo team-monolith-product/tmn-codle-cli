@@ -42,7 +42,8 @@ export default class ProblemCreate extends BaseCommand {
     "tag-ids": Flags.string({ description: "태그 ID", multiple: true }),
     "is-public": Flags.boolean({ description: "공개 여부", allowNo: true }),
     commentary: Flags.string({
-      description: "해설 (markdown). 로컬 이미지는 `![alt](file:///abs/path.png)` 형식",
+      description:
+        "해설 (markdown). 로컬 이미지는 `![alt](file:///abs/path.png)` 형식",
     }),
     "sample-answer": Flags.string({
       description: "모범답안 (descriptive 타입)",
