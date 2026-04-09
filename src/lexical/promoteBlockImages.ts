@@ -1,10 +1,13 @@
-// AIDEV-NOTE: @lexical/markdown의 IMAGE transformer는 textNode.replace(imageNode)로
-// image를 paragraph 내부에 둔다. 그러나 CDS의 ImageNode는 isInline()=false (block decorator)
-// 이고 표준 JSON 구조 (jce-codle-cds/src/stories/assets/image-node.json)는 image가
-// root.children 직속이어야 한다. CDS UI는 INSERT_IMAGE_COMMAND에서
-// $insertNodeToNearestRoot로 root level에 삽입하지만, markdown shortcut path는 동일한
-// 버그를 가진다 (CDS production에서는 markdown import를 안 써서 미발견).
-// 우리 CLI는 markdown 변환만 쓰므로 이 후처리로 image를 root level로 승격시킨다.
+// AIDEV-NOTE: 왜 이 후처리가 필요한가?
+//
+// CDS 렌더가 기대하는 구조:  root > image  (image가 root 직속)
+// markdown 변환이 만드는 구조: root > paragraph > image  (image가 paragraph 안)
+//
+// 원인: CDS의 IMAGE transformer(TextMatchTransformer)가 inline 치환을 하기 때문.
+// CDS 본가도 동일한 문제를 가지고 있으나, 에디터 UI로만 이미지를 삽입하므로 미발견.
+// CLI는 markdown 변환 경로만 사용하므로 이 후처리로 image를 root level로 꺼낸다.
+// CLI의 IMAGE transformer는 CDS 본가의 구현을 그대로 포팅한 것이며,
+// 이 호환성을 유지하기 위해 transformer 수정 대신 후처리를 택함.
 
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 
