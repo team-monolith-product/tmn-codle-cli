@@ -1,5 +1,5 @@
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { describe, expect, test } from "../fixtures/claude.js";
 import {
@@ -8,10 +8,12 @@ import {
   parseCodleOutput,
 } from "../lib/ndjson.js";
 
-// AIDEV-NOTE: CLI의 resolveLocalImages는 절대 경로만 허용한다.
-// 테스트 파일 위치 기준으로 fixture의 절대 경로를 미리 계산해 프롬프트에 전달한다.
+// AIDEV-NOTE: CLI의 resolveLocalImages는 file:// URL만 허용한다.
+// 테스트 파일 위치 기준으로 fixture의 file:// URL을 미리 계산해 프롬프트에 전달한다.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FIXTURE_IMAGE_PATH = resolve(__dirname, "../fixtures/upload-diagram.png");
+const FIXTURE_IMAGE_URL = pathToFileURL(
+  resolve(__dirname, "../fixtures/upload-diagram.png"),
+).href;
 
 const RAILS_REDIRECT_URL_RE =
   /https?:\/\/[^\s"'()]+\/rails\/active_storage\/blobs\/redirect\/[^\s"'()]+/;
@@ -23,7 +25,7 @@ describe("problem create with local image", () => {
     const title = `E2E Image ${Date.now()}`;
     const result = await claude.run(
       `"${title}" 제목으로 서술형 문제를 만들어줘. ` +
-        `본문에 "${FIXTURE_IMAGE_PATH}" 파일을 이미지로 첨부해서, ` +
+        `본문에 "${FIXTURE_IMAGE_URL}" 파일을 이미지로 첨부해서, ` +
         `"이 사진을 보고 떠오르는 점을 자유롭게 적어보세요" 라는 질문으로 만들어줘.`,
     );
 
@@ -45,7 +47,7 @@ describe("problem create with local image", () => {
     expect(output).toHaveProperty("id");
     const serialized = JSON.stringify(output);
     expect(serialized).toMatch(RAILS_REDIRECT_URL_RE);
-    expect(serialized).not.toContain(FIXTURE_IMAGE_PATH);
+    expect(serialized).not.toContain(FIXTURE_IMAGE_URL);
   });
 });
 
@@ -54,7 +56,7 @@ describe("material create with local image", () => {
     const name = `E2E Image Material ${Date.now()}`;
     const result = await claude.run(
       `"${name}" 이름으로 새 자료를 만들어줘. ` +
-        `본문은 "${FIXTURE_IMAGE_PATH}" 파일을 이미지로 포함한 간단한 안내문으로 해줘.`,
+        `본문은 "${FIXTURE_IMAGE_URL}" 파일을 이미지로 포함한 간단한 안내문으로 해줘.`,
     );
 
     expectCodleCommand(result, "material create");
@@ -73,6 +75,6 @@ describe("material create with local image", () => {
     expect(output).toHaveProperty("id");
     const serialized = JSON.stringify(output);
     expect(serialized).toMatch(RAILS_REDIRECT_URL_RE);
-    expect(serialized).not.toContain(FIXTURE_IMAGE_PATH);
+    expect(serialized).not.toContain(FIXTURE_IMAGE_URL);
   });
 });
