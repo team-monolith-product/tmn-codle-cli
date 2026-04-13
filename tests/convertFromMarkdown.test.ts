@@ -77,9 +77,7 @@ describe("convertFromMarkdown", () => {
   });
 
   it("image without size suffix keeps default width=0, height=0", () => {
-    const result = convertFromMarkdown(
-      "![photo](https://example.com/img.png)",
-    );
+    const result = convertFromMarkdown("![photo](https://example.com/img.png)");
     const children = result.root.children as Array<Record<string, unknown>>;
     expect(children[0].width).toBe(0);
     expect(children[0].height).toBe(0);

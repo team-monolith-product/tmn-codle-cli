@@ -36,9 +36,7 @@ export async function resolveLocalImages(
         absPath = fileURLToPath(src);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        throw new Error(
-          `유효하지 않은 file:// URL (src="${src}"): ${msg}`,
-        );
+        throw new Error(`유효하지 않은 file:// URL (src="${src}"): ${msg}`);
       }
       uploadTargets.push({ src, absPath });
       continue;

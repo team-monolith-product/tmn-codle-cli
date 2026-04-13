@@ -152,7 +152,9 @@ describe("resolveLocalImages", () => {
     const aPath = makeFile(tmpDir, "a.png");
     const bPath = makeFile(tmpDir, "b.png");
     const client = makeMockClient();
-    const md = `![local a](${fileUrl(aPath)}) ![remote](https://example.com/r.png) ![local b](${fileUrl(bPath)})`;
+    const md = `![local a](${fileUrl(
+      aPath,
+    )}) ![remote](https://example.com/r.png) ![local b](${fileUrl(bPath)})`;
     const result = await resolveLocalImages(md, client);
 
     expect(result).toContain("redirect/sid-a.png/a.png");
