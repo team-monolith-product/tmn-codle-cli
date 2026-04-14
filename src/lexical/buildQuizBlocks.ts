@@ -1,4 +1,5 @@
 import type { SerializedEditorState } from "lexical";
+import { convertFromMarkdown } from "./convertFromMarkdown.js";
 
 interface SelectChoice {
   text: string;
@@ -58,6 +59,16 @@ function buildParagraph(text?: string): Record<string, unknown> {
   };
 }
 
+// AIDEV-NOTE: questionText를 markdown으로 파싱하여 Lexical children을 반환한다.
+// 이미지(`![alt](url =WxH)`) 등 block-level 요소를 포함할 수 있으므로
+// plain text paragraph가 아닌 convertFromMarkdown을 거쳐야 한다.
+function parseQuestionContent(questionText?: string): Record<string, unknown>[] {
+  if (!questionText) return [buildParagraph()];
+  const state = convertFromMarkdown(questionText);
+  const root = state.root as unknown as { children: Record<string, unknown>[] };
+  return [...root.children, buildParagraph()];
+}
+
 export function buildSelectBlock(
   choices: SelectChoice[],
   questionText?: string,
@@ -71,9 +82,7 @@ export function buildSelectBlock(
     },
     value: String(i),
   }));
-  const children: Record<string, unknown>[] = questionText
-    ? [buildParagraph(questionText), buildParagraph()]
-    : [buildParagraph()];
+  const children: Record<string, unknown>[] = parseQuestionContent(questionText);
   children.push({
     type: "problem-select",
     version: 1,
@@ -100,9 +109,7 @@ export function buildInputBlock(
     caseSensitive: options?.caseSensitive ?? false,
     ignoreWhitespace: true,
   };
-  const children: Record<string, unknown>[] = questionText
-    ? [buildParagraph(questionText), buildParagraph()]
-    : [buildParagraph()];
+  const children: Record<string, unknown>[] = parseQuestionContent(questionText);
   children.push(node);
   return wrapRoot(children);
 }

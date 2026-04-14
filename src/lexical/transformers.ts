@@ -82,8 +82,9 @@ export const IMAGE: TextMatchTransformer = {
     const sizeSuffix = w || h ? ` =${w}x${h}` : "";
     return `![${node.getAltText()}](${node.getSrc()}${sizeSuffix})`;
   },
-  importRegExp: /!(?:\[([^[]*)\])(?:\(([^(]+)\))/,
-  regExp: /!(?:\[([^[]*)\])(?:\(([^(]+)\))$/,
+  // AIDEV-NOTE: \\? — AI 에이전트가 !를 \!로 이스케이프하는 경우를 허용한다.
+  importRegExp: /\\?!(?:\[([^[]*)\])(?:\(([^(]+)\))/,
+  regExp: /\\?!(?:\[([^[]*)\])(?:\(([^(]+)\))$/,
   replace: (textNode, match) => {
     const [, altText, rawSrc] = match;
     const sizeMatch = rawSrc.match(SIZE_SUFFIX_RE);

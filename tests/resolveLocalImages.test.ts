@@ -208,6 +208,24 @@ describe("resolveLocalImages", () => {
     expect(client.createDirectUpload).not.toHaveBeenCalled();
   });
 
+  it("handles escaped \\! prefix (AI agent escape)", async () => {
+    const absPath = makeFile(tmpDir, "esc.png");
+    const client = makeMockClient();
+    const md = `\\![photo](${fileUrl(absPath)})`;
+    const result = await resolveLocalImages(md, client);
+    expect(result).toMatch(/!\[photo\]\(.*redirect\/sid-esc\.png\/esc\.png\)/);
+    expect(client.createDirectUpload).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles escaped \\! with size suffix", async () => {
+    const absPath = makeFile(tmpDir, "esc2.png");
+    const client = makeMockClient();
+    const md = `\\![photo](${fileUrl(absPath)} =400x300)`;
+    const result = await resolveLocalImages(md, client);
+    expect(result).toMatch(/!\[photo\]\(.*redirect\/sid-esc2\.png\/esc2\.png =400x300\)/);
+    expect(client.createDirectUpload).toHaveBeenCalledTimes(1);
+  });
+
   it("fails fast on mixed valid file:// + invalid raw path without uploading anything", async () => {
     const absPath = makeFile(tmpDir, "a.png");
     const client = makeMockClient();

@@ -6,7 +6,8 @@ import { directUploadFile } from "../api/directUpload.js";
 // AIDEV-NOTE: markdown 이미지 매칭 regex. transformers.ts IMAGE와 동일한 문법 범위를 커버.
 // src에는 공백이 없다고 가정한다 (markdown 표준).
 // 그룹3: 선택적 크기 접미사 (e.g. " =400x300", " =400"). URL 치환 시 보존한다.
-const IMAGE_REGEX = /!\[([^\]]*)\]\(([^)\s]+)(\s+=\d+(?:x\d+)?)?\)/g;
+// \\? — AI 에이전트가 !를 \!로 이스케이프하는 경우를 허용한다.
+const IMAGE_REGEX = /\\?!\[([^\]]*)\]\(([^)\s]+)(\s+=\d+(?:x\d+)?)?\)/g;
 
 // AIDEV-NOTE: 호출자(Claude Code 등)는 로컬 파일을 file:// URL로 넘겨야 한다.
 // 모든 src를 "URL form"으로 통일하기 위한 설계:

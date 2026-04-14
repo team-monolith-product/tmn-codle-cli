@@ -83,6 +83,28 @@ describe("convertFromMarkdown", () => {
     expect(children[0].height).toBe(0);
   });
 
+  it("parses escaped \\! image syntax", () => {
+    const result = convertFromMarkdown(
+      "\\![alt](https://example.com/img.png)",
+    );
+    const children = result.root.children as Array<Record<string, unknown>>;
+    expect(children).toHaveLength(1);
+    expect(children[0].type).toBe("image");
+    expect(children[0].src).toBe("https://example.com/img.png");
+  });
+
+  it("parses escaped \\! with size suffix", () => {
+    const result = convertFromMarkdown(
+      "\\![photo](https://example.com/img.png =400x300)",
+    );
+    const children = result.root.children as Array<Record<string, unknown>>;
+    expect(children).toHaveLength(1);
+    expect(children[0].type).toBe("image");
+    expect(children[0].src).toBe("https://example.com/img.png");
+    expect(children[0].width).toBe(400);
+    expect(children[0].height).toBe(300);
+  });
+
   it("splits a paragraph with inline image into text/image/text blocks", () => {
     const result = convertFromMarkdown(
       "hello ![alt](https://example.com/img.png) world",
