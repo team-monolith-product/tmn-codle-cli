@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-04-14
+
+### Fixed
+
+- `problem create` — descriptive 문제 생성 시 `criteria` 미지정이어도 `descriptive_criterium` 레코드를 기본값(`input_size: 200`, `high_ratio: 1.0`, `mid_ratio: 0.7`, `low_ratio: 0.3`)으로 항상 생성하도록 수정. FE 에디터에서 null 참조 버그 방지.
+
 ## [1.3.0] - 2026-04-09
 
 ### Added
