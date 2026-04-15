@@ -59,11 +59,11 @@ jobs:
               return;
             }
 
-            const content = match[1]
-              .replace(/<!--[\s\S]*?-->/g, '')
-              .replace(/^-\s*$/gm, '')
-              .replace(/^### \w+\n+(?=### |\s*$)/gm, '')
-              .replace(/### \w+\s*$/g, '')
+            const raw = match[1].replace(/<!--[\s\S]*?-->/g, '');
+            const content = raw
+              .split(/^(?=### )/gm)
+              .filter(sec => sec.trim().split('\n').some(l => /^- .+/.test(l)))
+              .join('\n')
               .trim();
 
             fs.writeFileSync('/tmp/changelog_entry.md', content);
