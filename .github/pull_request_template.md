@@ -1,3 +1,23 @@
+<!--
+📌 PR 제목 컨벤션 (자동 버전 관리에 사용됩니다)
+
+  <type>: <설명>
+
+  type:
+    feat     → 새 기능 (minor 버전 bump)
+    fix      → 버그 수정 (patch 버전 bump)
+    perf     → 성능 개선 (patch 버전 bump)
+    chore, docs, refactor, test, ci, style, build → 버전 변경 없음
+
+  breaking change:
+    feat!: <설명> → major 버전 bump
+
+  예시:
+    feat: 자료 검색 커맨드 추가
+    fix: 로그인 토큰 갱신 오류 수정
+    feat!: 인증 방식 변경
+-->
+
 # 변경 사항
 
 <!-- 무엇을 왜 변경했는지 설명합니다. -->
@@ -32,6 +52,23 @@ codle material search [query] [--query <value>] [--tag-ids <value>...] [--is-pub
 ### 추가 내용
 
 <!-- 인증/인가, 인프라 등 커맨드별 섹션에 해당하지 않는 설계 결정이 있다면 -->
+
+# Changelog
+
+<!-- ⚠️ 이 섹션은 자동으로 CHANGELOG.md에 추가됩니다. -->
+<!-- 해당하는 카테고리만 남기고 나머지는 삭제하세요. 버전 bump이 없는 PR은 이 섹션을 비워두세요. -->
+
+### Added
+
+-
+
+### Fixed
+
+-
+
+### Changed
+
+-
 
 <!-- 커맨드 인터페이스(flags, description, examples) 변경 시 아래 섹션을 추가하세요:
 # E2E
