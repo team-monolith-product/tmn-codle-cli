@@ -9,6 +9,8 @@ jobs:
   release:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Determine version bump
         id: bump
@@ -34,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
-          token: ${{ secrets.MACHINE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         if: steps.bump.outputs.type != ''
