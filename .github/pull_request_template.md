@@ -53,23 +53,6 @@ codle material search [query] [--query <value>] [--tag-ids <value>...] [--is-pub
 
 <!-- 인증/인가, 인프라 등 커맨드별 섹션에 해당하지 않는 설계 결정이 있다면 -->
 
-# Changelog
-
-<!-- ⚠️ 이 섹션은 자동으로 CHANGELOG.md에 추가됩니다. -->
-<!-- 해당하는 카테고리만 남기고 나머지는 삭제하세요. 버전 bump이 없는 PR은 이 섹션을 비워두세요. -->
-
-### Added
-
--
-
-### Fixed
-
--
-
-### Changed
-
--
-
 <!-- 커맨드 인터페이스(flags, description, examples) 변경 시 아래 섹션을 추가하세요:
 # E2E
 - [ ] `/e2e-report` 실행 완료
