@@ -6,6 +6,10 @@ const mockClient = {
   getMe: vi.fn(),
   listMaterials: vi.fn(),
   getMaterial: vi.fn(),
+  getActivity: vi.fn(),
+  getHtmlActivity: vi.fn(),
+  getSocroomActivity: vi.fn(),
+  listBoards: vi.fn(),
   createMaterial: vi.fn(),
   updateMaterial: vi.fn(),
   duplicateMaterial: vi.fn(),
@@ -137,7 +141,7 @@ describe("material search", () => {
 });
 
 describe("material get", () => {
-  it("basic with activities and transitions", async () => {
+  it("basic with activities, activitiables, and transitions", async () => {
     mockClient.getMaterial.mockResolvedValue({
       data: {
         id: "1",
@@ -163,12 +167,22 @@ describe("material get", () => {
           },
         },
         {
+          id: "q1",
+          type: "quiz_activity",
+          attributes: { is_exam: false, is_study_room: true },
+        },
+        {
           id: "20",
           type: "activity",
           attributes: { name: "활동2", depth: 0 },
           relationships: {
             activitiable: { data: { type: "html_activity", id: "h1" } },
           },
+        },
+        {
+          id: "h1",
+          type: "html_activity",
+          attributes: { html_activity_pages: [] },
         },
         {
           id: "t1",
@@ -193,6 +207,24 @@ describe("material get", () => {
     expect(parsed.tags).toHaveLength(1);
     expect(parsed.tags[0].name).toBe("AI");
     expect(parsed.transitions).toHaveLength(1);
+
+    // activitiable nested in each activity
+    const quiz = parsed.activities.find(
+      (a: Record<string, unknown>) => a.activitiable_type === "QuizActivity",
+    );
+    expect(quiz.activitiable).toEqual({
+      id: "q1",
+      is_exam: false,
+      is_study_room: true,
+    });
+
+    const html = parsed.activities.find(
+      (a: Record<string, unknown>) => a.activitiable_type === "HtmlActivity",
+    );
+    expect(html.activitiable).toEqual({
+      id: "h1",
+      html_activity_pages: [],
+    });
   });
 
   it("no activities", async () => {
@@ -208,6 +240,320 @@ describe("material get", () => {
     const output = await runCommand(MaterialGet, ["1"]);
     const parsed = JSON.parse(output);
     expect(parsed.activities).toHaveLength(0);
+  });
+
+  it("activitiable not in included resolves to null", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "10",
+          type: "activity",
+          attributes: { name: "활동1", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "video_activity", id: "v1" } },
+          },
+        },
+      ],
+    });
+
+    const output = await runCommand(MaterialGet, ["1"]);
+    const parsed = JSON.parse(output);
+    expect(parsed.activities[0].activitiable_type).toBe("VideoActivity");
+    expect(parsed.activities[0].activitiable_id).toBe("v1");
+    expect(parsed.activities[0].activitiable).toBeNull();
+  });
+
+  it("--detail fetches quiz problem_collections", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "10",
+          type: "activity",
+          attributes: { name: "퀴즈", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "quiz_activity", id: "q1" } },
+          },
+        },
+        {
+          id: "q1",
+          type: "quiz_activity",
+          attributes: { is_exam: false },
+        },
+      ],
+    });
+
+    // getActivity returns the activity with nested problem_collections
+    mockClient.getActivity.mockResolvedValue({
+      data: {
+        id: "10",
+        type: "activity",
+        attributes: { name: "퀴즈" },
+        relationships: {
+          problem_collections: {
+            data: [{ type: "problem_collection", id: "pc1" }],
+          },
+        },
+      },
+      included: [
+        {
+          id: "pc1",
+          type: "problem_collection",
+          attributes: {},
+          relationships: {
+            pcps: { data: [{ type: "problem_collections_problem", id: "pcp1" }] },
+          },
+        },
+        {
+          id: "pcp1",
+          type: "problem_collections_problem",
+          attributes: { position: 0 },
+          relationships: {
+            problem: { data: { type: "problem", id: "p1" } },
+          },
+        },
+        {
+          id: "p1",
+          type: "problem",
+          attributes: { problem_type: "quiz", title: "문제1" },
+          relationships: {
+            problem_answers: {
+              data: [{ type: "problem_answer", id: "pa1" }],
+            },
+          },
+        },
+        {
+          id: "pa1",
+          type: "problem_answer",
+          attributes: { content: "정답", is_correct: true },
+        },
+      ],
+    });
+
+    const output = await runCommand(MaterialGet, ["1", "--detail"]);
+    const parsed = JSON.parse(output);
+
+    expect(mockClient.getActivity).toHaveBeenCalledWith("10", {
+      include: expect.stringContaining("problem_collections.pcps.problem"),
+    });
+
+    const quiz = parsed.activities[0];
+    expect(quiz.problem_collections).toHaveLength(1);
+    expect(quiz.problem_collections[0].pcps[0].problem.title).toBe("문제1");
+    expect(quiz.problem_collections[0].pcps[0].problem.problem_answers[0].content).toBe("정답");
+  });
+
+  it("--detail fetches html_activity_pages", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "20",
+          type: "activity",
+          attributes: { name: "HTML", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "html_activity", id: "h1" } },
+          },
+        },
+        {
+          id: "h1",
+          type: "html_activity",
+          attributes: {},
+        },
+      ],
+    });
+
+    mockClient.getHtmlActivity.mockResolvedValue({
+      data: {
+        id: "h1",
+        type: "html_activity",
+        attributes: {},
+        relationships: {
+          html_activity_pages: {
+            data: [{ type: "html_activity_page", id: "hp1" }],
+          },
+        },
+      },
+      included: [
+        {
+          id: "hp1",
+          type: "html_activity_page",
+          attributes: { url: "https://example.com/page1", width: 800, height: 600 },
+        },
+      ],
+    });
+
+    const output = await runCommand(MaterialGet, ["1", "--detail"]);
+    const parsed = JSON.parse(output);
+
+    expect(mockClient.getHtmlActivity).toHaveBeenCalledWith("h1", {
+      include: "html_activity_pages",
+    });
+
+    const html = parsed.activities[0];
+    expect(html.activitiable.html_activity_pages).toHaveLength(1);
+    expect(html.activitiable.html_activity_pages[0].url).toBe("https://example.com/page1");
+  });
+
+  it("--detail fetches board data", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "30",
+          type: "activity",
+          attributes: { name: "보드", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "board_activity", id: "b1" } },
+          },
+        },
+        {
+          id: "b1",
+          type: "board_activity",
+          attributes: {},
+        },
+      ],
+    });
+
+    mockClient.listBoards.mockResolvedValue({
+      data: [
+        {
+          id: "board1",
+          type: "board",
+          attributes: { name: "토론 보드" },
+          relationships: {
+            board_columns: {
+              data: [{ type: "board_column", id: "bc1" }],
+            },
+          },
+        },
+      ],
+      included: [
+        {
+          id: "bc1",
+          type: "board_column",
+          attributes: { name: "첫번째 열" },
+        },
+      ],
+    });
+
+    const output = await runCommand(MaterialGet, ["1", "--detail"]);
+    const parsed = JSON.parse(output);
+
+    expect(mockClient.listBoards).toHaveBeenCalledWith({
+      "filter[boardable_type]": "Activity",
+      "filter[boardable_id]": "30",
+      include: "board_columns.root_board_posts",
+    });
+
+    const board = parsed.activities[0];
+    expect(board.boards).toHaveLength(1);
+    expect(board.boards[0].board_columns[0].name).toBe("첫번째 열");
+  });
+
+  it("--detail fetches socroom threads", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "40",
+          type: "activity",
+          attributes: { name: "소크룸", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "socroom_activity", id: "s1" } },
+          },
+        },
+        {
+          id: "s1",
+          type: "socroom_activity",
+          attributes: { max_turn_count: 5 },
+        },
+      ],
+    });
+
+    mockClient.getSocroomActivity.mockResolvedValue({
+      data: {
+        id: "s1",
+        type: "socroom_activity",
+        attributes: { max_turn_count: 5, topic: "AI 윤리" },
+        relationships: {
+          socroom_threads: {
+            data: [{ type: "socroom_thread", id: "st1" }],
+          },
+        },
+      },
+      included: [
+        {
+          id: "st1",
+          type: "socroom_thread",
+          attributes: { status: "completed" },
+        },
+      ],
+    });
+
+    const output = await runCommand(MaterialGet, ["1", "--detail"]);
+    const parsed = JSON.parse(output);
+
+    expect(mockClient.getSocroomActivity).toHaveBeenCalledWith("s1", {
+      include: "socroom_threads",
+    });
+
+    const socroom = parsed.activities[0];
+    expect(socroom.activitiable.topic).toBe("AI 윤리");
+    expect(socroom.activitiable.socroom_threads[0].status).toBe("completed");
+  });
+
+  it("without --detail does not make extra API calls", async () => {
+    mockClient.getMaterial.mockResolvedValue({
+      data: {
+        id: "1",
+        type: "material",
+        attributes: { name: "자료", is_public: false, is_official: false },
+      },
+      included: [
+        {
+          id: "10",
+          type: "activity",
+          attributes: { name: "퀴즈", depth: 0 },
+          relationships: {
+            activitiable: { data: { type: "quiz_activity", id: "q1" } },
+          },
+        },
+        {
+          id: "q1",
+          type: "quiz_activity",
+          attributes: { is_exam: false },
+        },
+      ],
+    });
+
+    await runCommand(MaterialGet, ["1"]);
+
+    expect(mockClient.getActivity).not.toHaveBeenCalled();
+    expect(mockClient.getHtmlActivity).not.toHaveBeenCalled();
+    expect(mockClient.listBoards).not.toHaveBeenCalled();
+    expect(mockClient.getSocroomActivity).not.toHaveBeenCalled();
   });
 });
 

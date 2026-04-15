@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-04-15
+
+### Added
+
+- `material get --detail` 플래그 추가. 활동별 EF 수준의 세부 데이터를 포함하여 조회한다.
+  - QuizActivity/SheetActivity: 문제 컬렉션, 문제, 태그, 채점기준, 정답
+  - HtmlActivity: HTML 페이지
+  - BoardActivity: 보드, 열, 게시글
+  - SocroomActivity: 토픽, 스레드
+- `material get` 기본 응답에 activitiable 상세 정보 포함 (기존에는 누락됨)
+- JSON:API included 재귀 resolve 유틸리티 (`resolveJsonApi`)
+
 ## [1.4.0] - 2026-04-14
 
 ### Added

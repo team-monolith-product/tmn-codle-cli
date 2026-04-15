@@ -239,6 +239,13 @@ export class CodleClient {
   }
 
   // --- Activities ---
+  async getActivity(
+    activityId: string,
+    params?: Record<string, string | number | boolean>,
+  ): Promise<Record<string, unknown>> {
+    return this.request("GET", `/api/v1/activities/${activityId}`, { params });
+  }
+
   async createActivity(
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
@@ -345,6 +352,26 @@ export class CodleClient {
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     return this.request("PUT", `/api/v1/boards/${boardId}`, { json: data });
+  }
+
+  // --- Html Activities ---
+  async getHtmlActivity(
+    htmlActivityId: string,
+    params?: Record<string, string | number | boolean>,
+  ): Promise<Record<string, unknown>> {
+    return this.request("GET", `/api/v1/html_activities/${htmlActivityId}`, {
+      params,
+    });
+  }
+
+  // --- Socroom Activities ---
+  async getSocroomActivity(
+    socroomActivityId: string,
+    params?: Record<string, string | number | boolean>,
+  ): Promise<Record<string, unknown>> {
+    return this.request("GET", `/api/v1/socroom_activities/${socroomActivityId}`, {
+      params,
+    });
   }
 
   // --- Embedded Activities ---

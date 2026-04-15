@@ -42,6 +42,75 @@ export function extractIncluded(
     .map(extractAttributes);
 }
 
+/**
+ * JSON:API 응답의 included 배열을 재귀적으로 resolve하여 중첩 객체로 변환한다.
+ * included에 존재하지 않는 relationship은 결과에서 제외된다.
+ */
+export function resolveJsonApi(
+  response: JsonApiResponse,
+): Record<string, unknown> | Record<string, unknown>[] {
+  const dataArr = Array.isArray(response.data)
+    ? response.data
+    : response.data
+      ? [response.data]
+      : [];
+  const allResources = [...dataArr, ...(response.included ?? [])];
+
+  const rawMap = new Map<string, JsonApiResource>();
+  for (const r of allResources) {
+    if (r.type && r.id) rawMap.set(`${r.type}:${r.id}`, r);
+  }
+
+  const cache = new Map<string, Record<string, unknown>>();
+
+  function resolve(key: string): Record<string, unknown> | null {
+    if (cache.has(key)) return cache.get(key)!;
+    const raw = rawMap.get(key);
+    if (!raw) return null;
+
+    const result: Record<string, unknown> = {
+      id: raw.id,
+      ...((raw.attributes as Record<string, unknown>) ?? {}),
+    };
+    cache.set(key, result);
+
+    type RelRef = { type: string; id: string };
+    const rels = raw.relationships as
+      | Record<string, { data?: RelRef | RelRef[] | null }>
+      | undefined;
+    if (!rels) return result;
+
+    for (const [name, rel] of Object.entries(rels)) {
+      if (!rel?.data) continue;
+      if (Array.isArray(rel.data)) {
+        const items = rel.data
+          .map((ref) => resolve(`${ref.type}:${ref.id}`))
+          .filter((r): r is Record<string, unknown> => r !== null);
+        if (items.length > 0) result[name] = items;
+      } else {
+        const item = resolve(`${rel.data.type}:${rel.data.id}`);
+        if (item !== null) result[name] = item;
+      }
+    }
+
+    return result;
+  }
+
+  if (Array.isArray(response.data)) {
+    return dataArr.map(
+      (d) => resolve(`${d.type}:${d.id}`) ?? { id: d.id },
+    );
+  }
+  if (response.data) {
+    return (
+      resolve(`${response.data.type}:${response.data.id}`) ?? {
+        id: response.data.id,
+      }
+    );
+  }
+  return {};
+}
+
 export function buildJsonApiPayload(
   resourceType: string,
   attributes: Record<string, unknown>,
