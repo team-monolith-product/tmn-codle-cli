@@ -9,13 +9,9 @@
     perf     → 성능 개선 (patch 버전 bump)
     chore, docs, refactor, test, ci, style, build → 버전 변경 없음
 
-  breaking change:
-    feat!: <설명> → major 버전 bump
-
   예시:
     feat: 자료 검색 커맨드 추가
     fix: 로그인 토큰 갱신 오류 수정
-    feat!: 인증 방식 변경
 -->
 
 # 변경 사항
