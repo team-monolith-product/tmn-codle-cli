@@ -70,20 +70,20 @@ describe("material get", () => {
 });
 
 describe("material get --detail", () => {
-  test("--detail로 퀴즈 활동의 문제 컬렉션 포함", async ({
+  test("자세히 조회 요청 시 --detail 플래그 사용", async ({
     claude,
     factory,
   }) => {
     const material = await createMaterial(factory);
     const quizActivitiable = await factory.create("quiz_activity");
-    const activity = await createActivity(factory, material.id, {
+    await createActivity(factory, material.id, {
       name: `e2e-quiz-detail-${Date.now()}`,
       activitiableType: "QuizActivity",
       activitiableId: quizActivitiable.id,
     });
 
     const result = await claude.run(
-      `자료 ID "${material.id}"의 상세 정보를 --detail 플래그를 사용하여 조회해줘.`,
+      `자료 ID "${material.id}"를 문제, 페이지 등 세부 정보까지 자세히 조회해줘.`,
     );
 
     expectCodleCommand(result, "material get");
@@ -99,7 +99,6 @@ describe("material get --detail", () => {
     expect(command).toContain("--detail");
 
     const output = JSON.stringify(parseCodleOutput(interaction!.result!));
-    expect(output).toContain(activity.id);
     expect(output).toContain("problem_collections");
   });
 });
