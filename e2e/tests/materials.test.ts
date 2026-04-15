@@ -69,6 +69,41 @@ describe("material get", () => {
   });
 });
 
+describe("material get --detail", () => {
+  test("--detail로 퀴즈 활동의 문제 컬렉션 포함", async ({
+    claude,
+    factory,
+  }) => {
+    const material = await createMaterial(factory);
+    const quizActivitiable = await factory.create("quiz_activity");
+    const activity = await createActivity(factory, material.id, {
+      name: `e2e-quiz-detail-${Date.now()}`,
+      activitiableType: "QuizActivity",
+      activitiableId: quizActivitiable.id,
+    });
+
+    const result = await claude.run(
+      `자료 ID "${material.id}"의 상세 정보를 --detail 플래그를 사용하여 조회해줘.`,
+    );
+
+    expectCodleCommand(result, "material get");
+
+    const interaction = findCodleInteraction(
+      result.toolInteractions,
+      "material get",
+    );
+    expect(interaction?.result).toBeDefined();
+    expect(interaction!.result!.isError).toBe(false);
+
+    const command = interaction!.call.input.command as string;
+    expect(command).toContain("--detail");
+
+    const output = JSON.stringify(parseCodleOutput(interaction!.result!));
+    expect(output).toContain(activity.id);
+    expect(output).toContain("problem_collections");
+  });
+});
+
 describe("material create", () => {
   test("자료 생성 시 본문(markdown) 포함", async ({ claude }) => {
     const materialName = `E2E Body ${Date.now()}`;
