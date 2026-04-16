@@ -229,6 +229,35 @@ describe("activity set-problems", () => {
     const output = parseCodleOutput<unknown>(interaction!.result!);
     expect(output).toBeDefined();
   });
+
+  test("필수 답변 의도 → isRequired:true 로 전달", async ({
+    claude,
+    factory,
+  }) => {
+    const material = await createMaterial(factory);
+
+    const result = await claude.run(
+      `자료 ID "${material.id}"에 활동지 활동 "E2E Required"를 만들고, ` +
+        `"E2E Q1"이라는 활동지 문제를 만들어서 연결해줘. ` +
+        `이 문제는 학생이 반드시 답을 작성해야 하는 필수 문제로 설정해줘.`,
+    );
+
+    expectCodleCommand(result, "activity set-problems");
+
+    const interaction = findCodleInteraction(
+      result.toolInteractions,
+      "activity set-problems",
+    );
+    expect(interaction!.result!.isError).toBe(false);
+
+    // --problems JSON에 isRequired: true가 포함되어야 한다.
+    const command = interaction!.call.input.command as string;
+    const match = command.match(/--problems\s+'(\[.*?\])'/s);
+    expect(match).not.toBeNull();
+    const problems = JSON.parse(match![1]) as Array<{ isRequired?: boolean }>;
+    expect(problems.length).toBeGreaterThanOrEqual(1);
+    expect(problems[0].isRequired).toBe(true);
+  });
 });
 
 // ===== activitiable update =====

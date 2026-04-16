@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-16
+
+### Added
+
+- `activity set-problems`의 `--problems` JSON에 `isRequired?: boolean` 필드 추가. PCP의 필수 답변 여부를 지정한다.
+  - 생략 시 신규 pcp는 문제의 `problem_type`에 따라 기본값 설정: `descriptive`/`sheet` → `true`, `quiz`/`judge` → `false` (codle-react FormPcp 템플릿과 동일)
+  - 생략 시 기존 pcp는 현재 값 유지
+
 ## [1.5.0] - 2026-04-15
 
 ### Added
