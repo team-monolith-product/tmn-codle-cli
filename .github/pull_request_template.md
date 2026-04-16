@@ -1,3 +1,19 @@
+<!--
+📌 PR 제목 컨벤션 (자동 버전 관리에 사용됩니다)
+
+  <type>: <설명>
+
+  type:
+    feat     → 새 기능 (minor 버전 bump)
+    fix      → 버그 수정 (patch 버전 bump)
+    perf     → 성능 개선 (patch 버전 bump)
+    chore, docs, refactor, test, ci, style, build → 버전 변경 없음
+
+  예시:
+    feat: 자료 검색 커맨드 추가
+    fix: 로그인 토큰 갱신 오류 수정
+-->
+
 # 변경 사항
 
 <!-- 무엇을 왜 변경했는지 설명합니다. -->

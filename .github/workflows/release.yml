@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Determine version bump
+        id: bump
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          TITLE="$PR_TITLE"
+          echo "PR title: $TITLE"
+
+          if echo "$TITLE" | grep -qE '^feat(\(.+\))?:'; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
+          elif echo "$TITLE" | grep -qE '^fix(\(.+\))?:'; then
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          elif echo "$TITLE" | grep -qE '^perf(\(.+\))?:'; then
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=" >> "$GITHUB_OUTPUT"
+            echo "No version bump needed for this PR"
+          fi
+
+      - name: Checkout
+        if: steps.bump.outputs.type != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Setup Node.js
+        if: steps.bump.outputs.type != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bump version
+        if: steps.bump.outputs.type != ''
+        id: version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          NEW_VERSION=$(npm version ${{ steps.bump.outputs.type }} --no-git-tag-version)
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+          git add package.json package-lock.json
+          git commit -m "chore: release $NEW_VERSION"
+
+      - name: Push
+        if: steps.bump.outputs.type != ''
+        run: |
+          git push origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Create GitHub Release
+        if: steps.bump.outputs.type != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.version }}" \
+            --target ${{ github.event.pull_request.base.ref }} \
+            --title "${{ steps.version.outputs.version }}" \
+            --generate-notes

@@ -1,0 +1,33 @@
+name: PR Title Convention
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          TITLE="$PR_TITLE"
+          PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|style|build)(\(.+\))?: .+'
+
+          if echo "$TITLE" | grep -qE "$PATTERN"; then
+            echo "✅ PR title is valid: $TITLE"
+          else
+            echo "❌ PR title does not follow convention: $TITLE"
+            echo ""
+            echo "Expected format: <type>: <description>"
+            echo ""
+            echo "Types: feat, fix, chore, docs, refactor, test, ci, perf, style, build"
+            echo ""
+            echo "Examples:"
+            echo "  feat: 새로운 커맨드 추가"
+            echo "  fix: 로그인 오류 수정"
+            echo "  chore: 의존성 업데이트"
+            exit 1
+          fi
