@@ -97,7 +97,7 @@ export default class ActivitySetProblems extends BaseCommand {
     problems: Flags.string({
       required: true,
       description:
-        '문제 목록 JSON [{id, point?, isRequired?}]. isRequired 생략 시 신규 pcp는 문제 유형에 따라 기본값(서술형/활동지→true, 퀴즈/파이썬→false), 기존 pcp는 현재 값 유지.',
+        "문제 목록 JSON [{id, point?, isRequired?}]. isRequired 생략 시 신규 pcp는 문제 유형에 따라 기본값(서술형/활동지→true, 퀴즈/파이썬→false), 기존 pcp는 현재 값 유지.",
     }),
   };
 
