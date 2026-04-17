@@ -369,7 +369,9 @@ describe("update_activitiable — VideoActivity", () => {
     const putCall = mockClient.request.mock.calls[1];
     expect(putCall[0]).toBe("PUT");
     expect(putCall[1]).toBe("/api/v1/video_activities/v1");
-    expect(putCall[2].json.data.attributes.screen_narration_script).toBeDefined();
+    expect(
+      putCall[2].json.data.attributes.screen_narration_script,
+    ).toBeDefined();
     expect(
       putCall[2].json.data.attributes.screen_narration_script.root,
     ).toBeDefined();
@@ -407,7 +409,9 @@ describe("update_activitiable — VideoActivity", () => {
     expect(putCall[2].json.data.attributes.url).toBe(
       "https://example.com/video",
     );
-    expect(putCall[2].json.data.attributes.screen_narration_script).toBeDefined();
+    expect(
+      putCall[2].json.data.attributes.screen_narration_script,
+    ).toBeDefined();
   });
 
   it("API 에러 처리", async () => {
@@ -557,9 +561,7 @@ describe("update_activitiable — CodapActivity", () => {
           },
         },
       })
-      .mockResolvedValueOnce(
-        makeJsonApiResponse("codap_activity", "c1", {}),
-      );
+      .mockResolvedValueOnce(makeJsonApiResponse("codap_activity", "c1", {}));
 
     const output = await runCommand(ActivitiableUpdate, [
       "--activity-id",
@@ -631,9 +633,7 @@ describe("update_activitiable — ScratchActivity", () => {
           },
         },
       })
-      .mockResolvedValueOnce(
-        makeJsonApiResponse("scratch_activity", "s1", {}),
-      );
+      .mockResolvedValueOnce(makeJsonApiResponse("scratch_activity", "s1", {}));
 
     const output = await runCommand(ActivitiableUpdate, [
       "--activity-id",

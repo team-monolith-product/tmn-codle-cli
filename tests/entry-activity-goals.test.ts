@@ -56,9 +56,7 @@ describe("entry-activity-goal list", () => {
   });
 
   it("API 에러 처리", async () => {
-    mockClient.request.mockRejectedValue(
-      new CodleAPIError(403, "Forbidden"),
-    );
+    mockClient.request.mockRejectedValue(new CodleAPIError(403, "Forbidden"));
 
     const output = await runCommand(EntryActivityGoalList, [
       "--entry-activity-id",

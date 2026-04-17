@@ -4,8 +4,7 @@ import { extractList } from "../../api/models.js";
 import { BaseCommand } from "../../base-command.js";
 
 export default class EntryActivityGoalList extends BaseCommand {
-  static description =
-    "엔트리 활동의 목표 목록을 조회합니다.";
+  static description = "엔트리 활동의 목표 목록을 조회합니다.";
 
   static examples = [
     "<%= config.bin %> <%= command.id %> --entry-activity-id 123",
