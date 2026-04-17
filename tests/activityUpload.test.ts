@@ -30,9 +30,14 @@ import { runCommand } from "./run-command.js";
 function stubResolveStudioActivity(studioId: string): void {
   // GET /api/v1/activities/:id?include=activitiable → JSON:API response
   mockClient.request.mockResolvedValueOnce(
-    makeJsonApiResponse("activity", "456", {}, {
-      activitiable: { data: { type: "studio_activity", id: studioId } },
-    }),
+    makeJsonApiResponse(
+      "activity",
+      "456",
+      {},
+      {
+        activitiable: { data: { type: "studio_activity", id: studioId } },
+      },
+    ),
   );
 }
 

@@ -35,11 +35,9 @@ async function resolveStudioActivityId(
   client: CodleClient,
   activityId: string,
 ): Promise<string> {
-  const resp = await client.request(
-    "GET",
-    `/api/v1/activities/${activityId}`,
-    { params: { include: "activitiable" } },
-  );
+  const resp = await client.request("GET", `/api/v1/activities/${activityId}`, {
+    params: { include: "activitiable" },
+  });
   const actData = (resp.data as Record<string, unknown>) || {};
   const relationships =
     (actData.relationships as Record<string, unknown>) || {};
@@ -49,9 +47,7 @@ async function resolveStudioActivityId(
   const id = String(rel.id || "");
   const rawType = String(rel.type || "");
   if (!id || !rawType) {
-    throw new Error(
-      `활동 ${activityId}에서 activitiable을 찾을 수 없습니다.`,
-    );
+    throw new Error(`활동 ${activityId}에서 activitiable을 찾을 수 없습니다.`);
   }
   const type = rawType
     .split("_")
@@ -97,7 +93,9 @@ export default class ActivityUpload extends BaseCommand {
     const ext = extname(filePath).toLowerCase();
     if (!ALLOWED_EXTENSIONS.has(ext)) {
       throw new Error(
-        `허용되지 않은 확장자: ${ext || "(없음)"}. 허용 목록: ${[...ALLOWED_EXTENSIONS].join(", ")}`,
+        `허용되지 않은 확장자: ${ext || "(없음)"}. 허용 목록: ${[
+          ...ALLOWED_EXTENSIONS,
+        ].join(", ")}`,
       );
     }
 
@@ -110,7 +108,9 @@ export default class ActivityUpload extends BaseCommand {
         throw new Error(`file not found: ${filePath}`);
       }
       throw new Error(
-        `failed to stat file: ${filePath} (${e instanceof Error ? e.message : String(e)})`,
+        `failed to stat file: ${filePath} (${
+          e instanceof Error ? e.message : String(e)
+        })`,
       );
     }
     if (fileStat.size > MAX_BYTE_SIZE) {
