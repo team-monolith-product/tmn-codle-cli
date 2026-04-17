@@ -3,11 +3,10 @@ import { basename, extname } from "node:path";
 
 import { Args, Flags } from "@oclif/core";
 
+import type { CodleClient } from "../../api/client.js";
 import { BaseCommand } from "../../base-command.js";
 
 // AIDEV-NOTE: class-rails `ActivityService::Upload` 의 동일 상수와 일치해야 함.
-// 규칙이 어긋나 CLI 가 더 엄격한 경우 사용자는 서버 재시도로 우회할 수 있으나,
-// 서버가 더 엄격하면 CLI 가 쳐준 결과가 그대로 거절되니 문제되지 않음.
 const MAX_BYTE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = new Set([
   ".py",
@@ -29,6 +28,42 @@ const ALLOWED_EXTENSIONS = new Set([
   ".bmp",
   ".pdf",
 ]);
+
+// AIDEV-NOTE: html-activity-page/sync.ts 의 resolveHtmlActivityId 와 동일 패턴.
+// Activity ID → StudioActivity ID 를 해석하며, StudioActivity 가 아니면 에러.
+async function resolveStudioActivityId(
+  client: CodleClient,
+  activityId: string,
+): Promise<string> {
+  const resp = await client.request(
+    "GET",
+    `/api/v1/activities/${activityId}`,
+    { params: { include: "activitiable" } },
+  );
+  const actData = (resp.data as Record<string, unknown>) || {};
+  const relationships =
+    (actData.relationships as Record<string, unknown>) || {};
+  const activitiable =
+    (relationships.activitiable as Record<string, unknown>) || {};
+  const rel = (activitiable.data as Record<string, unknown>) || {};
+  const id = String(rel.id || "");
+  const rawType = String(rel.type || "");
+  if (!id || !rawType) {
+    throw new Error(
+      `활동 ${activityId}에서 activitiable을 찾을 수 없습니다.`,
+    );
+  }
+  const type = rawType
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join("");
+  if (type !== "StudioActivity") {
+    throw new Error(
+      `활동 ${activityId}의 유형이 ${type}입니다. StudioActivity만 지원합니다.`,
+    );
+  }
+  return id;
+}
 
 export default class ActivityUpload extends BaseCommand {
   static description =
@@ -84,6 +119,11 @@ export default class ActivityUpload extends BaseCommand {
       );
     }
 
+    const studioActivityId = await resolveStudioActivityId(
+      this.client,
+      args.id,
+    );
+
     const buffer = await readFile(filePath);
 
     const formData = new FormData();
@@ -96,7 +136,7 @@ export default class ActivityUpload extends BaseCommand {
 
     const resp = await this.client.request(
       "POST",
-      `/api/v1/activities/${args.id}/upload`,
+      `/api/v1/studio_activities/${studioActivityId}/upload`,
       { formData },
     );
 
