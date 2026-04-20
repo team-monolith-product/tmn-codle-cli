@@ -22,20 +22,8 @@ cd "$PROJECT_DIR"
 npm run build
 
 # --- 영향 TC 선별 ---
-# src/commands/{cmd}/ → e2e/tests/{test}.test.ts 매핑
-cmd_to_test() {
-  case "$1" in
-    activitiable) echo "activitiables" ;;
-    activity) echo "activities" ;;
-    docs) echo "docs" ;;
-    entry-activity-goal) echo "entryActivityGoals" ;;
-    html-activity-page) echo "htmlActivityPages" ;;
-    material) echo "materials" ;;
-    problem) echo "problems" ;;
-    tag) echo "tags" ;;
-    *) echo "" ;;
-  esac
-}
+# e2e 테스트 파일명은 src/commands/ 디렉토리명과 동일한 컨벤션 (kebab-case)
+# 예: src/commands/material/ → e2e/tests/material.test.ts
 
 CHANGED_FILES=$(git diff origin/main --name-only 2>/dev/null || true)
 
@@ -55,12 +43,11 @@ else
       break
     fi
 
-    # src/commands/{cmd}/ → e2e test 매핑
+    # src/commands/{cmd}/ → e2e/tests/{cmd}.test.ts (동일 이름)
     if [[ "$file" =~ ^src/commands/([^/]+)/ ]]; then
       cmd="${BASH_REMATCH[1]}"
-      mapped=$(cmd_to_test "$cmd")
-      if [ -n "$mapped" ] && [ -f "e2e/tests/${mapped}.test.ts" ]; then
-        AFFECTED_TESTS+=("e2e/tests/${mapped}.test.ts")
+      if [ -f "e2e/tests/${cmd}.test.ts" ]; then
+        AFFECTED_TESTS+=("e2e/tests/${cmd}.test.ts")
       fi
     fi
 
