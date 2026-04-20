@@ -6,7 +6,7 @@ import { Args, Flags } from "@oclif/core";
 import type { CodleClient } from "../../api/client.js";
 import { BaseCommand } from "../../base-command.js";
 
-// AIDEV-NOTE: class-rails `ActivityService::Upload` 의 동일 상수와 일치해야 함.
+// AIDEV-NOTE: class-rails `StudioActivityService::Upload` 의 동일 상수와 일치해야 함.
 const MAX_BYTE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = new Set([
   ".py",
@@ -30,14 +30,15 @@ const ALLOWED_EXTENSIONS = new Set([
 ]);
 
 // AIDEV-NOTE: html-activity-page/sync.ts 의 resolveHtmlActivityId 와 동일 패턴.
-// Activity ID → StudioActivity ID 를 해석하며, StudioActivity 가 아니면 에러.
 async function resolveStudioActivityId(
   client: CodleClient,
   activityId: string,
 ): Promise<string> {
-  const resp = await client.request("GET", `/api/v1/activities/${activityId}`, {
-    params: { include: "activitiable" },
-  });
+  const resp = await client.request(
+    "GET",
+    `/api/v1/activities/${activityId}`,
+    { params: { include: "activitiable" } },
+  );
   const actData = (resp.data as Record<string, unknown>) || {};
   const relationships =
     (actData.relationships as Record<string, unknown>) || {};
@@ -47,7 +48,9 @@ async function resolveStudioActivityId(
   const id = String(rel.id || "");
   const rawType = String(rel.type || "");
   if (!id || !rawType) {
-    throw new Error(`활동 ${activityId}에서 activitiable을 찾을 수 없습니다.`);
+    throw new Error(
+      `활동 ${activityId}에서 activitiable을 찾을 수 없습니다.`,
+    );
   }
   const type = rawType
     .split("_")
@@ -125,14 +128,17 @@ export default class ActivityUpload extends BaseCommand {
     );
 
     const buffer = await readFile(filePath);
+    const fullName = basename(filePath);
+    const extension = ext.startsWith(".") ? ext.slice(1) : ext;
+    const filename = extension
+      ? fullName.slice(0, -(extension.length + 1))
+      : fullName;
 
     const formData = new FormData();
-    formData.append(
-      "file",
-      new Blob([new Uint8Array(buffer)]),
-      basename(filePath),
-    );
-    formData.append("relative_path", flags.path);
+    formData.append("file", new Blob([new Uint8Array(buffer)]), fullName);
+    formData.append("path", flags.path === "." ? "" : flags.path);
+    formData.append("filename", filename);
+    formData.append("extension", extension);
 
     const resp = await this.client.request(
       "POST",

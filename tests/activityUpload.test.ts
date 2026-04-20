@@ -28,7 +28,6 @@ import ActivityUpload from "../src/commands/activity/upload.js";
 import { runCommand } from "./run-command.js";
 
 function stubResolveStudioActivity(studioId: string): void {
-  // GET /api/v1/activities/:id?include=activitiable → JSON:API response
   mockClient.request.mockResolvedValueOnce(
     makeJsonApiResponse(
       "activity",
@@ -54,7 +53,7 @@ describe("activity upload", () => {
     vi.unstubAllGlobals();
   });
 
-  it("resolves studio_activity_id then sends multipart POST", async () => {
+  it("sends filename and extension as separate form fields", async () => {
     const filePath = join(tmpDir, "main.py");
     writeFileSync(filePath, "print('hello')\n");
 
@@ -70,23 +69,18 @@ describe("activity upload", () => {
 
     expect(mockClient.request).toHaveBeenCalledTimes(2);
 
-    // 1st call: resolve activity → studio_activity
-    const [m1, u1] = mockClient.request.mock.calls[0];
-    expect(m1).toBe("GET");
-    expect(u1).toBe("/api/v1/activities/456");
-
-    // 2nd call: upload
     const [m2, u2, opts] = mockClient.request.mock.calls[1];
     expect(m2).toBe("POST");
     expect(u2).toBe("/api/v1/studio_activities/99/upload");
 
     const formData = opts.formData as FormData;
-    expect(formData).toBeInstanceOf(FormData);
-    expect(formData.get("relative_path")).toBe(".");
+    expect(formData.get("filename")).toBe("main");
+    expect(formData.get("extension")).toBe("py");
+    expect(formData.get("path")).toBe("");
     expect((formData.get("file") as File).name).toBe("main.py");
   });
 
-  it("forwards --path as relative_path", async () => {
+  it("forwards --path as path field", async () => {
     const filePath = join(tmpDir, "data.csv");
     writeFileSync(filePath, "a,b\n1,2\n");
 
@@ -103,7 +97,9 @@ describe("activity upload", () => {
 
     const [, , opts] = mockClient.request.mock.calls[1];
     const formData = opts.formData as FormData;
-    expect(formData.get("relative_path")).toBe("data/problem1");
+    expect(formData.get("path")).toBe("data/problem1");
+    expect(formData.get("filename")).toBe("data");
+    expect(formData.get("extension")).toBe("csv");
   });
 
   it("rejects disallowed extensions before hitting the server", async () => {
