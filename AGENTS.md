@@ -65,9 +65,7 @@ bash scripts/run-e2e.sh --report
 
 ### E2E 테스트
 
-E2E 테스트는 Claude Code를 통해 CLI를 실행하고 결과를 검증하는 방식이다. `e2e/` 디렉토리에 테스트·픽스처·러너가 있다.
-
-e2e 테스트 파일명은 `src/commands/` 디렉토리명과 동일한 kebab-case를 사용한다: `src/commands/material/` → `e2e/tests/material.test.ts`
+E2E 테스트는 Claude Code를 통해 CLI를 실행하고 결과를 검증하는 방식이다. 작성 원칙과 파일명 컨벤션은 `e2e/README.md`를 참고한다.
 
 ```bash
 # 단일 실행
