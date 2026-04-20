@@ -8,6 +8,8 @@ import {
   parseCodleOutput,
 } from "../../lib/ndjson.js";
 
+// AIDEV-NOTE: CLI의 resolveLocalImages는 file:// URL만 허용한다.
+// 테스트 파일 위치 기준으로 fixture의 file:// URL을 미리 계산해 프롬프트에 전달한다.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_IMAGE_URL = pathToFileURL(
   resolve(__dirname, "../../fixtures/upload-diagram.png"),
