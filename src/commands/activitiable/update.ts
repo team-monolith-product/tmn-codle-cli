@@ -6,6 +6,7 @@ import {
   buildJsonApiPayload,
   extractList,
   extractSingle,
+  pascalToSnake,
 } from "../../api/models.js";
 import { BaseCommand } from "../../base-command.js";
 import {
@@ -51,7 +52,8 @@ export default class ActivitiableUpdate extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '# 안내문'  # Board",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '설명을 작성하세요'  # Sheet",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --url https://example.com  # Embedded/Video",
-    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded",
+    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode/Scratch",
+    "<%= config.bin %> <%= command.id %> --activity-id 456 --screen-narration-script '# 나레이션'  # Video",
   ];
 
   static flags = {
@@ -69,6 +71,10 @@ export default class ActivitiableUpdate extends BaseCommand {
       description:
         "학습목표 (markdown). 로컬 이미지는 `![alt](file:///abs/path.png)` 형식. 크기 지정: `![alt](src =WIDTHxHEIGHT)`",
       multiple: true,
+    }),
+    "screen-narration-script": Flags.string({
+      description:
+        "화면 해설 스크립트 (markdown, VideoActivity). 로컬 이미지는 `![alt](file:///abs/path.png)` 형식",
     }),
     "is-exam": Flags.boolean({
       description: "평가용 퀴즈 여부 (QuizActivity)",
@@ -175,18 +181,59 @@ export default class ActivitiableUpdate extends BaseCommand {
     }
 
     if (info.type === "VideoActivity") {
-      if (flags.url === undefined) {
-        this.error("VideoActivity: url은 필수입니다.", { exit: 1 });
+      if (
+        flags.url === undefined &&
+        flags["screen-narration-script"] === undefined
+      ) {
+        this.error(
+          "VideoActivity: url 또는 screen-narration-script 중 하나 이상 필요합니다.",
+          { exit: 1 },
+        );
       }
-      const payload = buildJsonApiPayload(
-        "video_activities",
-        { url: flags.url },
-        info.id,
+      const attrs: Record<string, unknown> = {};
+      if (flags.url !== undefined) attrs.url = flags.url;
+      if (flags["screen-narration-script"] !== undefined) {
+        const script = await resolveLocalImages(
+          flags["screen-narration-script"],
+          this.client,
+        );
+        attrs.screen_narration_script = convertFromMarkdown(script);
+      }
+      const payload = buildJsonApiPayload("video_activities", attrs, info.id);
+      const response = await this.client.request(
+        "PUT",
+        `/api/v1/video_activities/${info.id}`,
+        { json: payload },
       );
-      await this.client.request("PUT", `/api/v1/video_activities/${info.id}`, {
-        json: payload,
-      });
-      this.output({ id: info.id, activity_id: flags["activity-id"] });
+      const video = extractSingle(response);
+      this.output(video);
+      return;
+    }
+
+    if (
+      info.type === "CodapActivity" ||
+      info.type === "MakecodeActivity" ||
+      info.type === "ScratchActivity"
+    ) {
+      if (flags.goals === undefined) {
+        this.error(`${info.type}: goals는 필수입니다.`, { exit: 1 });
+      }
+      const resolvedGoals = await Promise.all(
+        flags.goals!.map((g) => resolveLocalImages(g, this.client)),
+      );
+      const attrs: Record<string, unknown> = {
+        goals: resolvedGoals.map((g) => convertFromMarkdown(g)),
+      };
+      const snakeType = pascalToSnake(info.type);
+      const pluralType = snakeType.replace(/y$/, "ies");
+      const payload = buildJsonApiPayload(pluralType, attrs, info.id);
+      const response = await this.client.request(
+        "PUT",
+        `/api/v1/${pluralType}/${info.id}`,
+        { json: payload },
+      );
+      const result = extractSingle(response);
+      this.output(result);
       return;
     }
 

@@ -299,7 +299,7 @@ describe("update_activitiable — EmbeddedActivity", () => {
 });
 
 describe("update_activitiable — VideoActivity", () => {
-  it("url 없으면 에러", async () => {
+  it("url과 screen-narration-script 모두 없으면 에러", async () => {
     mockResolveActivitiable("video_activity", "v1");
 
     await runCommand(ActivitiableUpdate, ["--activity-id", "act-1"]);
@@ -331,7 +331,6 @@ describe("update_activitiable — VideoActivity", () => {
     ]);
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe("v1");
-    expect(parsed.activity_id).toBe("act-1");
 
     const putCall = mockClient.request.mock.calls[1];
     expect(putCall[0]).toBe("PUT");
@@ -339,6 +338,79 @@ describe("update_activitiable — VideoActivity", () => {
     expect(putCall[2].json.data.attributes.url).toBe(
       "https://example.com/video",
     );
+  });
+
+  it("screen-narration-script로 업데이트 성공 (markdown → Lexical 변환)", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "video_activity", id: "v1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(makeJsonApiResponse("video_activity", "v1", {}));
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--screen-narration-script",
+      "# 나레이션 스크립트",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("v1");
+
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[0]).toBe("PUT");
+    expect(putCall[1]).toBe("/api/v1/video_activities/v1");
+    expect(
+      putCall[2].json.data.attributes.screen_narration_script,
+    ).toBeDefined();
+    expect(
+      putCall[2].json.data.attributes.screen_narration_script.root,
+    ).toBeDefined();
+    expect(putCall[2].json.data.attributes.url).toBeUndefined();
+  });
+
+  it("url과 screen-narration-script 동시 업데이트 성공", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "video_activity", id: "v1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(makeJsonApiResponse("video_activity", "v1", {}));
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--url",
+      "https://example.com/video",
+      "--screen-narration-script",
+      "나레이션",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("v1");
+
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[2].json.data.attributes.url).toBe(
+      "https://example.com/video",
+    );
+    expect(
+      putCall[2].json.data.attributes.screen_narration_script,
+    ).toBeDefined();
   });
 
   it("API 에러 처리", async () => {
@@ -466,9 +538,121 @@ describe("update_activitiable — QuizActivity", () => {
   });
 });
 
+describe("update_activitiable — CodapActivity", () => {
+  it("goals 없으면 에러", async () => {
+    mockResolveActivitiable("codap_activity", "c1");
+
+    await runCommand(ActivitiableUpdate, ["--activity-id", "act-1"]);
+    expect(mockClient.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("goals로 업데이트 성공 (markdown → Lexical 변환)", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "codap_activity", id: "c1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(makeJsonApiResponse("codap_activity", "c1", {}));
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--goals",
+      "목표 1",
+      "--goals",
+      "목표 2",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("c1");
+
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[0]).toBe("PUT");
+    expect(putCall[1]).toBe("/api/v1/codap_activities/c1");
+    expect(putCall[2].json.data.attributes.goals).toHaveLength(2);
+    expect(putCall[2].json.data.attributes.goals[0].root).toBeDefined();
+  });
+});
+
+describe("update_activitiable — MakecodeActivity", () => {
+  it("goals로 업데이트 성공", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "makecode_activity", id: "m1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(
+        makeJsonApiResponse("makecode_activity", "m1", {}),
+      );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--goals",
+      "목표",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("m1");
+
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[0]).toBe("PUT");
+    expect(putCall[1]).toBe("/api/v1/makecode_activities/m1");
+    expect(putCall[2].json.data.attributes.goals).toHaveLength(1);
+    expect(putCall[2].json.data.attributes.goals[0].root).toBeDefined();
+  });
+});
+
+describe("update_activitiable — ScratchActivity", () => {
+  it("goals로 업데이트 성공", async () => {
+    mockClient.request
+      .mockResolvedValueOnce({
+        data: {
+          id: "act-1",
+          type: "activity",
+          attributes: {},
+          relationships: {
+            activitiable: {
+              data: { type: "scratch_activity", id: "s1" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce(makeJsonApiResponse("scratch_activity", "s1", {}));
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--goals",
+      "목표",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("s1");
+
+    const putCall = mockClient.request.mock.calls[1];
+    expect(putCall[0]).toBe("PUT");
+    expect(putCall[1]).toBe("/api/v1/scratch_activities/s1");
+    expect(putCall[2].json.data.attributes.goals).toHaveLength(1);
+  });
+});
+
 describe("update_activitiable — 지원하지 않는 유형", () => {
-  it("ScratchActivity 등 미지원 유형은 에러", async () => {
-    mockResolveActivitiable("scratch_activity", "sc1");
+  it("PdfActivity 등 미지원 유형은 에러", async () => {
+    mockResolveActivitiable("pdf_activity", "p1");
 
     await runCommand(ActivitiableUpdate, [
       "--activity-id",

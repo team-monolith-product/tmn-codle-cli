@@ -52,7 +52,7 @@
         "description": "활동(Activity) CRUD, 코스 흐름, 갈림길 설정"
       },
       "activitiable": {
-        "description": "활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video)"
+        "description": "활동 유형별 속성 업데이트 (Board, Sheet, Embedded, Video, Codap, Makecode, Scratch, Quiz)"
       },
       "problem": {
         "description": "문제(Problem) CRUD"
@@ -65,6 +65,9 @@
       },
       "html-activity-page": {
         "description": "교안(HtmlActivity) 페이지 동기화"
+      },
+      "entry-activity-goal": {
+        "description": "엔트리 활동 목표 생성 및 조회"
       }
     }
   },
