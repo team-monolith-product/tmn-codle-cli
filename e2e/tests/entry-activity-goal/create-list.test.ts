@@ -1,10 +1,10 @@
-import { describe, expect, test } from "../fixtures/claude.js";
-import { createActivity, createMaterial } from "../lib/factory.js";
+import { describe, expect, test } from "../../fixtures/claude.js";
+import { createActivity, createMaterial } from "../../lib/factory.js";
 import {
   expectCodleCommand,
   findCodleInteraction,
   parseCodleOutput,
-} from "../lib/ndjson.js";
+} from "../../lib/ndjson.js";
 
 describe("entry-activity-goal create + list", () => {
   test("엔트리 활동 목표를 생성하고 목록을 조회", async ({
