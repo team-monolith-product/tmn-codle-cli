@@ -23,6 +23,7 @@ e2e/.e2e-config.tmp.json
 e2e/.e2e-credentials.tmp/
 e2e/.e2e-bin.tmp/
 e2e/.stats.md
+e2e/.stats-*.md
 
 # Stash (removed features pending reimplementation)
 _stash/
