@@ -42,10 +42,7 @@ describe("tag search", () => {
   });
 
   it("invalid domain is rejected by oclif options validation", async () => {
-    const output = await runCommand(TagSearch, [
-      "--domain",
-      "invalid_domain",
-    ]);
+    const output = await runCommand(TagSearch, ["--domain", "invalid_domain"]);
     const parsed = JSON.parse(output);
     expect(parsed.error).toBe(true);
     expect(parsed.message).toContain("--domain");
