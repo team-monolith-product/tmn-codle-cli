@@ -292,11 +292,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       if (flags.level !== undefined) attrs.level = flags.level;
       if (flags["is-score-viewable"] !== undefined)
         attrs.is_score_viewable = flags["is-score-viewable"];
-      const payload = buildJsonApiPayload(
-        "socroom_activities",
-        attrs,
-        info.id,
-      );
+      const payload = buildJsonApiPayload("socroom_activities", attrs, info.id);
       const response = await this.client.updateSocroomActivity(
         info.id,
         payload as Record<string, unknown>,
