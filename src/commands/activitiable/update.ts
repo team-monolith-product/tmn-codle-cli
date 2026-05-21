@@ -54,6 +54,7 @@ export default class ActivitiableUpdate extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --activity-id 456 --url https://example.com  # Embedded/Video",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode/Scratch",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --screen-narration-script '# 나레이션'  # Video",
+    "<%= config.bin %> <%= command.id %> --activity-id 456 --topic '주제' --max-turn-count 10 --level normal  # Socroom",
   ];
 
   static flags = {
@@ -78,6 +79,20 @@ export default class ActivitiableUpdate extends BaseCommand {
     }),
     "is-exam": Flags.boolean({
       description: "평가용 퀴즈 여부 (QuizActivity)",
+      allowNo: true,
+    }),
+    topic: Flags.string({
+      description: "소크룸 주제 (SocroomActivity)",
+    }),
+    "max-turn-count": Flags.integer({
+      description: "대화 턴 수, 5-20 (SocroomActivity)",
+    }),
+    level: Flags.string({
+      description: "난이도: easy, normal, hard (SocroomActivity)",
+      options: ["easy", "normal", "hard"],
+    }),
+    "is-score-viewable": Flags.boolean({
+      description: "점수 공개 여부 (SocroomActivity)",
       allowNo: true,
     }),
   };
@@ -253,6 +268,37 @@ export default class ActivitiableUpdate extends BaseCommand {
       );
       const quiz = extractSingle(response);
       this.output(quiz);
+      return;
+    }
+
+    if (info.type === "SocroomActivity") {
+      const hasSocroomFlag =
+        flags.topic !== undefined ||
+        flags.url !== undefined ||
+        flags["max-turn-count"] !== undefined ||
+        flags.level !== undefined ||
+        flags["is-score-viewable"] !== undefined;
+      if (!hasSocroomFlag) {
+        this.error(
+          "SocroomActivity: topic, url, max-turn-count, level, is-score-viewable 중 하나 이상 필요합니다.",
+          { exit: 1 },
+        );
+      }
+      const attrs: Record<string, unknown> = {};
+      if (flags.topic !== undefined) attrs.topic = flags.topic;
+      if (flags.url !== undefined) attrs.url = flags.url;
+      if (flags["max-turn-count"] !== undefined)
+        attrs.max_turn_count = flags["max-turn-count"];
+      if (flags.level !== undefined) attrs.level = flags.level;
+      if (flags["is-score-viewable"] !== undefined)
+        attrs.is_score_viewable = flags["is-score-viewable"];
+      const payload = buildJsonApiPayload("socroom_activities", attrs, info.id);
+      const response = await this.client.updateSocroomActivity(
+        info.id,
+        payload as Record<string, unknown>,
+      );
+      const socroom = extractSingle(response);
+      this.output(socroom);
       return;
     }
 
