@@ -5,6 +5,7 @@ on: pull_request
 jobs:
   prettier:
     runs-on: ubuntu-22.04
+    if: ${{ !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
 
     steps:
       - name: Checkout
