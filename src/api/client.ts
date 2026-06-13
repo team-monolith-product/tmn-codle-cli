@@ -387,6 +387,17 @@ export class CodleClient {
     );
   }
 
+  async updateSocroomActivity(
+    socroomActivityId: string,
+    data: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.request(
+      "PUT",
+      `/api/v1/socroom_activities/${socroomActivityId}`,
+      { json: data },
+    );
+  }
+
   // --- Embedded Activities ---
   async updateEmbeddedActivity(
     embeddedActivityId: string,

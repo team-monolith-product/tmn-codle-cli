@@ -8,6 +8,7 @@ const mockClient = {
   updateBoard: vi.fn(),
   updateSheetActivity: vi.fn(),
   updateEmbeddedActivity: vi.fn(),
+  updateSocroomActivity: vi.fn(),
 };
 vi.mock("../src/api/client.js", () => ({
   CodleClient: vi.fn(() => mockClient),
@@ -647,6 +648,143 @@ describe("update_activitiable — ScratchActivity", () => {
     expect(putCall[0]).toBe("PUT");
     expect(putCall[1]).toBe("/api/v1/scratch_activities/s1");
     expect(putCall[2].json.data.attributes.goals).toHaveLength(1);
+  });
+});
+
+describe("update_activitiable — SocroomActivity", () => {
+  beforeEach(() => {
+    mockResolveActivitiable("socroom_activity", "sr1");
+  });
+
+  it("소크룸 플래그 없으면 에러", async () => {
+    await runCommand(ActivitiableUpdate, ["--activity-id", "act-1"]);
+    expect(mockClient.updateSocroomActivity).not.toHaveBeenCalled();
+  });
+
+  it("topic으로 업데이트 성공", async () => {
+    mockClient.updateSocroomActivity.mockResolvedValue(
+      makeJsonApiResponse("socroom_activity", "sr1", { topic: "새 주제" }),
+    );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--topic",
+      "새 주제",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sr1");
+    expect(parsed.topic).toBe("새 주제");
+
+    const payload = mockClient.updateSocroomActivity.mock.calls[0][1];
+    expect(payload.data.attributes.topic).toBe("새 주제");
+  });
+
+  it("max-turn-count로 업데이트 성공", async () => {
+    mockClient.updateSocroomActivity.mockResolvedValue(
+      makeJsonApiResponse("socroom_activity", "sr1", { max_turn_count: 10 }),
+    );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--max-turn-count",
+      "10",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sr1");
+    expect(parsed.max_turn_count).toBe(10);
+
+    const payload = mockClient.updateSocroomActivity.mock.calls[0][1];
+    expect(payload.data.attributes.max_turn_count).toBe(10);
+  });
+
+  it("level로 업데이트 성공", async () => {
+    mockClient.updateSocroomActivity.mockResolvedValue(
+      makeJsonApiResponse("socroom_activity", "sr1", { level: "hard" }),
+    );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--level",
+      "hard",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sr1");
+    expect(parsed.level).toBe("hard");
+
+    const payload = mockClient.updateSocroomActivity.mock.calls[0][1];
+    expect(payload.data.attributes.level).toBe("hard");
+  });
+
+  it("is-score-viewable로 업데이트 성공", async () => {
+    mockClient.updateSocroomActivity.mockResolvedValue(
+      makeJsonApiResponse("socroom_activity", "sr1", {
+        is_score_viewable: false,
+      }),
+    );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--no-is-score-viewable",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sr1");
+    expect(parsed.is_score_viewable).toBe(false);
+
+    const payload = mockClient.updateSocroomActivity.mock.calls[0][1];
+    expect(payload.data.attributes.is_score_viewable).toBe(false);
+  });
+
+  it("여러 플래그 조합 업데이트 성공", async () => {
+    mockClient.updateSocroomActivity.mockResolvedValue(
+      makeJsonApiResponse("socroom_activity", "sr1", {
+        topic: "주제",
+        max_turn_count: 15,
+        level: "easy",
+        is_score_viewable: true,
+        url: "https://example.com",
+      }),
+    );
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--topic",
+      "주제",
+      "--max-turn-count",
+      "15",
+      "--level",
+      "easy",
+      "--is-score-viewable",
+      "--url",
+      "https://example.com",
+    ]);
+    const parsed = JSON.parse(output);
+    expect(parsed.id).toBe("sr1");
+
+    const payload = mockClient.updateSocroomActivity.mock.calls[0][1];
+    expect(payload.data.attributes.topic).toBe("주제");
+    expect(payload.data.attributes.max_turn_count).toBe(15);
+    expect(payload.data.attributes.level).toBe("easy");
+    expect(payload.data.attributes.is_score_viewable).toBe(true);
+    expect(payload.data.attributes.url).toBe("https://example.com");
+  });
+
+  it("API 에러 처리", async () => {
+    mockClient.updateSocroomActivity.mockRejectedValue(
+      new CodleAPIError(422, "Validation failed"),
+    );
+
+    await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--topic",
+      "주제",
+    ]);
+    expect(mockClient.updateSocroomActivity).toHaveBeenCalled();
   });
 });
 
