@@ -618,35 +618,23 @@ describe("update_activitiable — MakecodeActivity", () => {
 });
 
 describe("update_activitiable — ScratchActivity", () => {
-  it("goals로 업데이트 성공", async () => {
-    mockClient.request
-      .mockResolvedValueOnce({
-        data: {
-          id: "act-1",
-          type: "activity",
-          attributes: {},
-          relationships: {
-            activitiable: {
-              data: { type: "scratch_activity", id: "s1" },
-            },
-          },
-        },
-      })
-      .mockResolvedValueOnce(makeJsonApiResponse("scratch_activity", "s1", {}));
+  it("goals 업데이트는 더 이상 지원하지 않으며 안내 에러를 반환한다", async () => {
+    mockResolveActivitiable("scratch_activity", "s1");
 
-    const output = await runCommand(ActivitiableUpdate, [
+    await runCommand(ActivitiableUpdate, [
       "--activity-id",
       "act-1",
       "--goals",
       "목표",
     ]);
-    const parsed = JSON.parse(output);
-    expect(parsed.id).toBe("s1");
 
-    const putCall = mockClient.request.mock.calls[1];
-    expect(putCall[0]).toBe("PUT");
-    expect(putCall[1]).toBe("/api/v1/scratch_activities/s1");
-    expect(putCall[2].json.data.attributes.goals).toHaveLength(1);
+    // resolveActivitiable(GET)만 호출되고, 제거된 update 라우트로는 PUT을 시도하지 않는다.
+    expect(mockClient.request).toHaveBeenCalledTimes(1);
+    expect(mockClient.request).not.toHaveBeenCalledWith(
+      "PUT",
+      expect.stringContaining("/api/v1/scratch_activities/"),
+      expect.anything(),
+    );
   });
 });
 

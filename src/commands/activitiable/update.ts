@@ -52,7 +52,7 @@ export default class ActivitiableUpdate extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '# 안내문'  # Board",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '설명을 작성하세요'  # Sheet",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --url https://example.com  # Embedded/Video",
-    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode/Scratch",
+    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --screen-narration-script '# 나레이션'  # Video",
   ];
 
@@ -210,11 +210,17 @@ export default class ActivitiableUpdate extends BaseCommand {
       return;
     }
 
-    if (
-      info.type === "CodapActivity" ||
-      info.type === "MakecodeActivity" ||
-      info.type === "ScratchActivity"
-    ) {
+    if (info.type === "ScratchActivity") {
+      // AIDEV-NOTE: jce-class-rails PR #1843 (INF-363)에서 scratch_activities의
+      // update 라우트와 goals 컬럼이 제거됨 (목표는 scratch_activity_goals 테이블로 이관).
+      // 더 이상 PUT /api/v1/scratch_activities/:id 로 goals를 쓸 수 없다.
+      this.error(
+        "ScratchActivity: goals는 scratch_activities update로 더 이상 설정할 수 없습니다 (목표가 별도 테이블로 이관됨). CMM-15에서 전용 커맨드 지원 예정입니다.",
+        { exit: 1 },
+      );
+    }
+
+    if (info.type === "CodapActivity" || info.type === "MakecodeActivity") {
       if (flags.goals === undefined) {
         this.error(`${info.type}: goals는 필수입니다.`, { exit: 1 });
       }
