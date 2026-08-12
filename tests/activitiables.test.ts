@@ -621,12 +621,16 @@ describe("update_activitiable — ScratchActivity", () => {
   it("goals 업데이트는 더 이상 지원하지 않으며 안내 에러를 반환한다", async () => {
     mockResolveActivitiable("scratch_activity", "s1");
 
-    await runCommand(ActivitiableUpdate, [
+    const output = await runCommand(ActivitiableUpdate, [
       "--activity-id",
       "act-1",
       "--goals",
       "목표",
     ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBe(true);
+    expect(parsed.message).toContain("scratch_activity_goals");
 
     // resolveActivitiable(GET)만 호출되고, 제거된 update 라우트로는 PUT을 시도하지 않는다.
     expect(mockClient.request).toHaveBeenCalledTimes(1);

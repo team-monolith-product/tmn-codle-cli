@@ -215,7 +215,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       // update 라우트와 goals 컬럼이 제거됨 (목표는 scratch_activity_goals 테이블로 이관).
       // 더 이상 PUT /api/v1/scratch_activities/:id 로 goals를 쓸 수 없다.
       this.error(
-        "ScratchActivity: goals는 scratch_activities update로 더 이상 설정할 수 없습니다 (목표가 별도 테이블로 이관됨). CMM-15에서 전용 커맨드 지원 예정입니다.",
+        "ScratchActivity: goals가 scratch_activity_goals 리소스로 이관되어 activitiable update로는 수정할 수 없습니다.",
         { exit: 1 },
       );
     }
