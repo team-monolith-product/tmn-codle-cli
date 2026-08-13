@@ -210,16 +210,6 @@ export default class ActivitiableUpdate extends BaseCommand {
       return;
     }
 
-    if (info.type === "ScratchActivity") {
-      // AIDEV-NOTE: jce-class-rails PR #1843 (INF-363)에서 scratch_activities의
-      // update 라우트와 goals 컬럼이 제거됨 (목표는 scratch_activity_goals 테이블로 이관).
-      // 더 이상 PUT /api/v1/scratch_activities/:id 로 goals를 쓸 수 없다.
-      this.error(
-        "ScratchActivity: goals가 scratch_activity_goals 리소스로 이관되어 activitiable update로는 수정할 수 없습니다.",
-        { exit: 1 },
-      );
-    }
-
     if (info.type === "CodapActivity" || info.type === "MakecodeActivity") {
       if (flags.goals === undefined) {
         this.error(`${info.type}: goals는 필수입니다.`, { exit: 1 });
