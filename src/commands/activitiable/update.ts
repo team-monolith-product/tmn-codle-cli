@@ -52,7 +52,7 @@ export default class ActivitiableUpdate extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '# 안내문'  # Board",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --content '설명을 작성하세요'  # Sheet",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --url https://example.com  # Embedded/Video",
-    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode/Scratch",
+    "<%= config.bin %> <%= command.id %> --activity-id 456 --goals '목표1' --goals '목표2'  # Embedded/Codap/Makecode",
     "<%= config.bin %> <%= command.id %> --activity-id 456 --screen-narration-script '# 나레이션'  # Video",
   ];
 
@@ -210,11 +210,7 @@ export default class ActivitiableUpdate extends BaseCommand {
       return;
     }
 
-    if (
-      info.type === "CodapActivity" ||
-      info.type === "MakecodeActivity" ||
-      info.type === "ScratchActivity"
-    ) {
+    if (info.type === "CodapActivity" || info.type === "MakecodeActivity") {
       if (flags.goals === undefined) {
         this.error(`${info.type}: goals는 필수입니다.`, { exit: 1 });
       }

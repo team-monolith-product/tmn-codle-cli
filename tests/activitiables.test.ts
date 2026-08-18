@@ -617,39 +617,6 @@ describe("update_activitiable — MakecodeActivity", () => {
   });
 });
 
-describe("update_activitiable — ScratchActivity", () => {
-  it("goals로 업데이트 성공", async () => {
-    mockClient.request
-      .mockResolvedValueOnce({
-        data: {
-          id: "act-1",
-          type: "activity",
-          attributes: {},
-          relationships: {
-            activitiable: {
-              data: { type: "scratch_activity", id: "s1" },
-            },
-          },
-        },
-      })
-      .mockResolvedValueOnce(makeJsonApiResponse("scratch_activity", "s1", {}));
-
-    const output = await runCommand(ActivitiableUpdate, [
-      "--activity-id",
-      "act-1",
-      "--goals",
-      "목표",
-    ]);
-    const parsed = JSON.parse(output);
-    expect(parsed.id).toBe("s1");
-
-    const putCall = mockClient.request.mock.calls[1];
-    expect(putCall[0]).toBe("PUT");
-    expect(putCall[1]).toBe("/api/v1/scratch_activities/s1");
-    expect(putCall[2].json.data.attributes.goals).toHaveLength(1);
-  });
-});
-
 describe("update_activitiable — 지원하지 않는 유형", () => {
   it("PdfActivity 등 미지원 유형은 에러", async () => {
     mockResolveActivitiable("pdf_activity", "p1");
@@ -664,5 +631,23 @@ describe("update_activitiable — 지원하지 않는 유형", () => {
     expect(mockClient.updateBoard).not.toHaveBeenCalled();
     expect(mockClient.updateSheetActivity).not.toHaveBeenCalled();
     expect(mockClient.updateEmbeddedActivity).not.toHaveBeenCalled();
+  });
+
+  it("ScratchActivity는 미지원 유형 에러를 반환하고 PUT을 시도하지 않는다", async () => {
+    mockResolveActivitiable("scratch_activity", "s1");
+
+    const output = await runCommand(ActivitiableUpdate, [
+      "--activity-id",
+      "act-1",
+      "--goals",
+      "목표",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBe(true);
+    expect(parsed.message).toContain("지원하지 않는 유형");
+
+    // scratch_activities update 라우트가 제거되어 PUT 요청이 발생하지 않도록 고정
+    expect(mockClient.request).toHaveBeenCalledTimes(1);
   });
 });
