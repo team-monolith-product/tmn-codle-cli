@@ -31,12 +31,20 @@ jobs:
             echo "No version bump needed for this PR"
           fi
 
+      - uses: actions/create-github-app-token@v3
+        if: steps.bump.outputs.type != ''
+        id: app-token
+        with:
+          client-id: Iv23li2cfUIFIR5gL3Bp
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Checkout
         if: steps.bump.outputs.type != ''
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
-          token: ${{ secrets.MACHINE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Node.js
         if: steps.bump.outputs.type != ''
