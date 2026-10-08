@@ -1,0 +1,33 @@
+name: Verify release App authentication
+on:
+  pull_request:
+    types: [opened]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'verify-cli-release-app-e727a33d'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: Iv23li2cfUIFIR5gL3Bp
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          ref: verify-cli-release-app-e727a33d
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify isolated version commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          NEW_VERSION=$(npm version patch --no-git-tag-version)
+          test "$NEW_VERSION" = 'v1.9.1'
+          git add package.json package-lock.json
+          git commit -m "chore: verify isolated App release push [skip ci]"
+          git push origin verify-cli-release-app-e727a33d
